@@ -203,7 +203,7 @@ if b!="4":
 			<span v-html = "outputs[input.id]" style="font-size:20px"></span>
 			</br>
 			<div>
-				<textarea  v-if = "input.type != 'matrix||matrixlist' " v-model="input.value" @input="input.ready = true;runPythonCode()"></textarea>
+				<textarea  v-if = "input.type != 'matrix'&& input.type !='matrixlist' " v-model="input.value" @input="input.ready = true;runPythonCode()"></textarea>
 				<matrixinput v-else v-model="input.value" @input="input.ready = true;runPythonCode()"></matrixinput>
 			</div>
 			</br>
