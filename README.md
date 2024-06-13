@@ -71,7 +71,7 @@ You don't have to worry about it. Just tell your GPT that this system has the fo
 #### Some strategies
 When entering latex, it is frequently use `\command`. In python, the symbol `\` one needs to type `\\`. An easier method is to write `r"\command"` instead of `"\\command"`
 
-Remember the $$ sign each time you use latex. So keep in mind to use "$${latex(...)}$$". Because the MathJax needs "$$...$$" to display maths.
+Remember the `$$` sign each time you use latex. So keep in mind to use `$${latex(...)}$$`. Because the MathJax needs `$$...$$` to display maths.
 
 #### Random Seeds
 
