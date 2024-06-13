@@ -95,7 +95,7 @@ if b!="4":
             errors: "",
             inputs: [],
 	    temp:"[]",
-	    fucker:0,
+	    indexCounter:0,
             customInputExceptionMessage: 'CustomInputException: No input provided', // 自定义异常消息
 	    fileName:"example.py",
 	    correct:false, // This controls the showing of the words "Answer Correct". After the program successfully runs, it shows up.
@@ -199,11 +199,11 @@ if b!="4":
             <button @click="showSeed=!showSeed">{{showSeed?"Hide Seed":"Show Seed"}}</button>
 	    <input style="width:200px" type="file" v-on:change="getFile" id="input-file">
 	    <input v-if="showSeed" v-model = "seed" @input = "runPythonCode()"></input>
-		<div v-for="input in inputs" :key="input.fucker">
+		<div v-for="input in inputs" :key="input.indexCounter">
 			<span v-html = "outputs[input.id]" style="font-size:20px"></span>
 			</br>
 			<div>
-				<textarea  v-if = "input.type != 'matrix' " v-model="input.value" @input="input.ready = true;runPythonCode()"></textarea>
+				<textarea  v-if = "input.type != 'matrix||matrixlist' " v-model="input.value" @input="input.ready = true;runPythonCode()"></textarea>
 				<matrixinput v-else v-model="input.value" @input="input.ready = true;runPythonCode()"></matrixinput>
 			</div>
 			</br>
@@ -230,10 +230,8 @@ if b!="4":
 					 }catch(e){}
 	    })},
     mounted() {
-	//Fuckingly
-   // console.log("why you are not fuck?")
     console.log("start fetching git hub directory")
-    this.fetchData()//testing fuck
+    this.fetchData()
     console.log("end fetching")
 
 	document.addEventListener('pythonEvent', (event) => {
@@ -248,7 +246,6 @@ if b!="4":
 		//let context = this.code.split('\n')[line-1]
 		//console.log(event.lineno)
         });
-	// The above are fucking codes that do events with fucking python
         this.loadPyodide();
 //	this.initialize();// this cause problem when mounting
         },
@@ -310,9 +307,9 @@ if b!="4":
 		let type = rinima[0]
 //		context.split("#")[1].split("(")[0]
 		if(this.inputs[this.ind]==undefined){
-					Vue.set(this.inputs, this.ind, {fucker:this.fucker, id:this.ind,value:"", line:line, context:context, ready:false, type:type, parameters:parameters})
+					Vue.set(this.inputs, this.ind, {indexCounter:this.indexCounter, id:this.ind,value:"", line:line, context:context, ready:false, type:type, parameters:parameters})
 					console.log(this.inputs[this.ind])
-					this.fucker += 1
+					this.indexCounter += 1
 				}
 	},
 	getFile: function(event) {
@@ -358,7 +355,6 @@ if b!="4":
     await Promise.all(loadPackagePromises);
 //        await this.pyodide.loadPackage("sympy");
 //        await this.pyodide.loadPackage("numpy");
-//        console.log("tmd fucker is fucking")
 		this.loadingMessage = "Running preloading scripts. These scripts is important to syncronize the random seed and redirect I/O..."
 		this.pyodide.runPython(`import inspect
 import js
@@ -425,7 +421,7 @@ sympy.randMatrix = cuscus
     try {
         const response = await this.$http.get(endpoint, { headers });
         callback(null, response.bodyText); // 直接返回原始响应数据
-        this.code = response.bodyText // this actually fucked hahaha 
+        this.code = response.bodyText 
         this.fileName = endpoint.split("/").pop()
 	if(this.fileName.split(".").pop()=="py"){
 		this.restart()
@@ -448,26 +444,6 @@ sympy.randMatrix = cuscus
         });
     },
         runPythonCode() {
-// Do not delete the following code, it is the dynamic change input and output method.
-//		this.pyodide.setStdout({
-//		                        batched: (output) => {
-//						console.log("---------------")
-//						console.log(output)
-//						console.log(this.ind)
-//						console.log(JSON.stringify(this.outputs))
-//						Vue.set(this.outputs,this.ind,this.outputs[this.ind]==undefined?output+'\n':this.outputs[this.ind]+ output + '\n')//fucking.
-//						console.log(JSON.stringify(this.outputs))
-//						console.log("---------------")
-//                		        }
-//	                    });
-//		this.pyodide.setStderr({
-//		                        batched: (output) => {
-//						Vue.set(this.errors,this.ind,this.errors+ output + '\n')//fucking.
-  //              		        }
-//	                    });
-//		this.output = ''
-//		this.result = ''
-//		this.error = ''
 		this.initialize()
             if (this.pyodide) {
 		
