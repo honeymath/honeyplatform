@@ -1,0 +1,73 @@
+body {
+    margin: 0;
+    height: 100vh;
+}
+
+.CodeMirror {
+    height: 100vh;
+}
+
+textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            color: #333;
+            background-color: #f9f9f9;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: #66afe9;
+            outline: none;
+            box-shadow: 0 0 8px rgba(102, 175, 233, 0.6);
+        }
+
+	
+
+input[type="radio"] {
+  display: none;
+}
+
+
+.checked {
+  display: inline-block;
+  padding: 4px 11px;
+  background-color: #0ff;
+  font-family: Arial;
+  font-size: 16px;
+}
+
+.unchecked {
+  display: inline-block;
+  padding: 4px 11px;
+  background-color: #fff;
+  font-family: Arial;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.dir{
+  padding: 4px 11px;
+  color:#0000ff;
+  font-weight:bold;
+  width:100%;
+  float:left;
+  border:none;
+  text-align: left;
+  font-family: Arial;
+  font-size: 16px;
+  background-color:#fff;
+  cursor: pointer;
+}
+
+.dir:hover{
+  color:#ff0000;
+}
+
+
+

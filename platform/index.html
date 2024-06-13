@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Honeymath Problem Platform</title>
+    <script>
+        function loadStylesheet(local, global) {
+            return new Promise((resolve, reject) => {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = local;
+                link.onload = function() {
+                    console.log('Local stylesheet loaded successfully.');
+                    resolve();
+                };
+                link.onerror = function() {
+                    console.log('Local stylesheet not found, loading global stylesheet.');
+                    const globalLink = document.createElement('link');
+                    globalLink.rel = 'stylesheet';
+                    globalLink.href = global;
+                    globalLink.onload = resolve;
+                    globalLink.onerror = reject;
+                    document.head.appendChild(globalLink);
+                };
+                document.head.appendChild(link);
+            });
+        }
+
+        function loadScript(local, global) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = local;
+                script.onload = function() {
+                    console.log('Local script loaded successfully.');
+                    resolve();
+                };
+                script.onerror = function() {
+                    console.log('Local script not found, loading global script.');
+                    const globalScript = document.createElement('script');
+                    globalScript.src = global;
+                    globalScript.onload = resolve;
+                    globalScript.onerror = reject;
+                    document.head.appendChild(globalScript);
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        window.onload = function() {
+            Promise.all([
+                loadStylesheet('libs/codemirror/codemirror.min.css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css'),
+                loadStylesheet('libs/codemirror/dracula.min.css', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css')
+            ])
+            .then(() => {
+                console.log('All stylesheets loaded successfully.');
+
+                return Promise.all([
+                    loadScript('libs/pyodide/pyodide.js', 'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/pyodide.js'),
+                    loadScript('libs/MathJax-2.7.7/MathJax.js?config=TeX-AMS_CHTML', 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS_CHTML'),
+                    loadScript('libs/vue/vue.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js'),
+                    loadScript('libs/codemirror/codemirror.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js')
+                ]);
+            })
+            .then(() => {
+                console.log('Global scripts loaded successfully.');
+
+                return Promise.all([
+                    loadScript('libs/vue/vue-resource.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/vue-resource/1.5.1/vue-resource.min.js'),
+                    loadScript('libs/codemirror/python.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js'),
+                loadStylesheet('Matrixinput.css', 'Matrixinput.css'),
+                loadStylesheet('styles.css', 'styles.css')
+                ]);
+            })
+            .then(() => {
+                console.log('Vue-resource and CodeMirror python mode scripts loaded successfully.');
+
+                // Load purely local scripts directly
+                const matrixinputScript = document.createElement('script');
+                matrixinputScript.src = 'matrixinput.js';
+                document.head.appendChild(matrixinputScript);
+
+                const appScript = document.createElement('script');
+                appScript.src = 'app.js';
+                document.head.appendChild(appScript);
+            })
+            .catch(error => {
+                console.error('Error loading scripts:', error);
+            });
+        };
+    </script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            tex2jax: {
+                inlineMath: [['$','$'],['\\(','\\)']]
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="app">
+        <parent-component></parent-component>
+    </div>
+</body>
+</html>
+

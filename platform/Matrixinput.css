@@ -1,0 +1,47 @@
+.addmatrix{
+  background-color: transparent;
+  width:500px;
+  height:500px;
+}
+.matrixinput{
+clear:both;
+padding-top:20px;
+}
+.mat{
+  border-color:pink;
+  border-style: dashed;
+  margin-left:30px;
+float:left;
+}
+.column{
+  float:left;
+
+}
+.entry{
+  text-align: center;
+  margin-left:2px;
+  margin-top:2px;
+  border:20px;
+  border-color:black;
+  color:red;
+}
+.regularbox{
+  background-color:rgb(192, 252, 184);
+}
+.highlightbox{
+  background-color:rgb(241, 177, 233);
+}
+
+.correct{
+clear:both;
+font-size: 20px;
+font-weight:900;
+}
+.allow{
+  padding-top:20px;
+clear:both;
+}
+.review{
+  padding-top:20px;
+clear:both;
+}

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <!-- scripts to clean cache-->
+  <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+  <!-- docsify css-->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+<!-- Accordion css-->
+<link rel="stylesheet" href="//unpkg.com/docsify-accordion/src/style.css">
+
+<!-- /atleastzero/docsify-accordify -->
+<!--link rel="stylesheet" href="//unpkg.com/docsify-accordify/src/assets/default.css"-->
+
+
+  <!-- Docsify v4 -->
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: '',
+      repo: '',
+// The following setting is only for Mathjax settings		      
+      latex: {
+          inlineMath   : [['$', '$'], ['\\(', '\\)']], // default
+          displayMath  : [['$$', '$$']],               // default
+      },
+	plantuml: {
+    		skin: 'default',
+  	},
+	accordify: {
+        	prerenderComments: true,                    // default
+        	selectors: ['h1','h2','h3','h4','h5','h6','li','ul'], // default value
+        	debug: false                               // default value
+    	}
+    }
+  </script>
+  <!-- Docsify v4 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+ <!-- /upupming/docsify-katex-->
+ <!--
+<script src="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+<script src="//cdn.jsdelivr.net/npm/marked@4"></script>
+<script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
+\longrightarrow
+
+<!-- Mathjax LaTeX engine -->
+<script src="//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="//cdn.jsdelivr.net/npm/docsify-latex@0"></script>
+<!--  docsify-mermaid plugin -->
+<script src="//unpkg.com/mermaid/dist/mermaid.js"></script>
+<script src="//unpkg.com/docsify-mermaid@latest/dist/docsify-mermaid.js"></script>
+<script>mermaid.initialize({ startOnLoad: true });</script>
+<!-- plugin /imyelo/docsify-plantuml-->
+<script src="//unpkg.com/docsify-plantuml/dist/docsify-plantuml.min.js"></script>
+<!-- plugin /Leward/mermaid-docsify-->
+<script src="//unpkg.com/mermaid/dist/mermaid.js"></script>
+<script src="//unpkg.com/docsify-mermaid@latest/dist/docsify-mermaid.js"></script>
+<script>mermaid.initialize({ startOnLoad: true });</script>
+
+<!-- not yet plugin /shawntabrizi/docsify-slides-->
+
+<!-- isaozler/docsify-accordion -->
+<script src="//unpkg.com/docsify-accordion/src/index.js"></script>
+
+<!-- /atleastzero/docsify-accordify -->
+<!--script src="//unpkg.com/docsify-accordify/src/index.js"></script-->
+
+
+</body>
+</html>
