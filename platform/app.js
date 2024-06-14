@@ -223,7 +223,7 @@ Vue.component('repository',{
 })
 
 Vue.component('exercise',{
-	props:['seed','inputs','outputs','error','errors','correct'],
+	props:['seed','inputs','outputs','error','errors','correct','correctUntil'],
 	data(){
 		return{
 			showSeed:false,
@@ -247,6 +247,7 @@ Vue.component('exercise',{
 		</br>
 		<span v-html = "error" style="color:red;font-size:20px"></span>
 		</br>
+		<span>status:{{correctUntil}}</span>
 	    	<span v-if="correct" style="color:green;font-size:20px">Your answer is correct!</span>
 		</br>
             	<span style="color:red">{{errors}}</span>
@@ -259,6 +260,7 @@ Vue.component('parent-component', {
         return {
             pyodide: null,
 	    pointer:0,
+	    teacher:true,
 
 	    exercises:[{
 			    code: `
@@ -272,12 +274,14 @@ if b!="4":
   raise Exception(rf"You are wrong , $2+2 \\neq {b}$!")
 				`,
 			    ind: 0,
-			    outputs: ['ri'],
+			    outputs: [],
 			    error:"",
-			    errors: "fuck",
+			    errors: "",
 			    inputs: [],
 			    correct:false, // This controls the showing of the words "Answer Correct". After the program successfully runs, it shows up.
 			    seed:0, // this is the random number seed.
+			    correctUntil:0,
+			    show:true
 	}],
 	fileName:"example.py",
 	indexCounter:0,
@@ -290,27 +294,36 @@ if b!="4":
     template: `
 <div>
 <div v-if = "pythonReady">
-            <div style="width:100%;height:40px;background-color:black">
+            <div v-if="teacher" style="width:100%;height:40px;background-color:black">
                 <a href="/" style="color:white">Return to Home</a> 
                 <span style="color:lightblue">File Name =   </span>
                 <input v-model="fileName" style="border:none;background-color:black;color:lightgreen;font-size:25px"></input>
                 <button @click = "showFiles = !showFiles">{{showFiles?"Edit Code":"Browse Files"}}</button>
               </div>
 
-        <div style="width:55%;float:left">
+        <div v-if="teacher" style="width:55%;float:left">
             <div v-if = "showFiles">
 		<repository @code="(x)=>{exercises[pointer].code = x}" @fileName="(x)=>{fileName=x}" @clearScreen="clearScreen" @restart="restart" @present="present"></repository>
 	</div>
             <code-mirror v-else v-model="exercises[pointer].code" ></code-mirror>
         </div>
 
-       <div style="width:40%;float:left;padding:2%">
-	    <button @click="restart">Run Code</button>
-            <button @click="downloadCode">Download Code</button>
-	    <input style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
+       <div :style="{width:teacher?'40%':'100%'}" style="float:left;padding:2%">
+	    <button v-if="teacher" @click="restart">Run Code</button>
+            <button v-if="teacher" @click="downloadCode">Download Code</button>
+	    <input v-if="teacher" style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
+	    <button @click="teacher=!teacher">{{teacher?"Student Mode":"Teacher Mode"}}</button>
             <button @click="downloadStatus">Download Status</button>
 	    <input style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{uploadStatus(x)})}" id="input-file">
-		<exercise v-for="(ex,key) in exercises" :key="ex.seed" :seed="ex.seed" :inputs="ex.inputs" :outputs="ex.outputs" :error="ex.error" :errors="ex.errors" :correct="ex.correct" @runPythonCode="()=>{pointer=key;runPythonCode()}"></exercise>
+	    <div v-for="(ex,key) in exercises" :key="ex.seed">
+		<span v-if="key==pointer" style="color:blue">Problem{{key}}:</span> 
+		<span v-else @click="pointer=key">Problem{{key}}:</span> 
+			
+		<button @click="ex.show=!ex.show">{{ex.show?"Hide":"Show"}}</button>
+		<button @click="exercises.splice(key,1)">Delete Problem</button>
+		<exercise v-if="ex.show" :seed="ex.seed" :inputs="ex.inputs" :outputs="ex.outputs" :error="ex.error" :errors="ex.errors" :correct="ex.correct" :correctUntil="ex.correctUntil" @runPythonCode="()=>{pointer=key;runPythonCode()}"></exercise>
+	    </div>
+		<button v-if="teacher" @click="exercises.push({code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:Math.random(),correctUntil:0,show:true})">Add Problem</button>
 
 
 
@@ -357,12 +370,14 @@ if b!="4":
 		//this.exercises[this.pointer].seed = Math.random()
 		//this.exercises[this.pointer].inputs.splice(0,)
 		//this.runPythonCode()
+		var pointer_backup = this.pointer
 		this.exercises.forEach((obj,ind)=>{
 			obj.seed = Math.random()
 			obj.inputs.splice(0,)
 			this.pointer = ind
 			this.runPythonCode()
 		})
+		this.pointer = pointer_backup
 	},
 	present(){
 		this.exercises[this.pointer].outputs = [this.exercises[this.pointer].code]
@@ -393,7 +408,9 @@ if b!="4":
 				outputs:[],
 				error:"",
 				errors:"",
-				correct:false
+				correct:false,
+				correctUntil:0,
+				show:true
 			})
 			this.pointer = this.exercises.length - 1
 			this.runPythonCode()
@@ -541,7 +558,9 @@ sympy.randMatrix = cuscus
 			}
 			else if(e.type=="Exception"){
 				this.exercises[this.pointer].inputs.splice(this.exercises[this.pointer].ind,)
-			this.exercises[this.pointer].error = e.message.substring(/Exception:.*$/gm.exec(e.message).index+11)
+				this.exercises[this.pointer].error = e.message.substring(/Exception:.*$/gm.exec(e.message).index+11)
+				const match = e.message.match(/File "<exec>", line (\d+),/)
+				this.exercises[this.pointer].correctUntil = match?match[1]:0
 			}
 		}            
             } else {
