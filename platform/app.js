@@ -223,7 +223,7 @@ Vue.component('repository',{
 })
 
 Vue.component('exercise',{
-	props:['seed','inputs','outputs','error','errors','correct','correctUntil'],
+	props:['seed','inputs','outputs','error','errors','correct','score'],
 	data(){
 		return{
 			showSeed:false,
@@ -231,8 +231,6 @@ Vue.component('exercise',{
 	},
 	template:`
 	<div>
-	    <button @click="showSeed=!showSeed">{{showSeed?"Hide Seed":"Show Seed"}}</button>
-	    <input v-if="showSeed" v-model = "seed" @input = "$emit('runPythonCode')"></input>
 		<div v-for="input in inputs" :key="input.indexCounter">
 			<span v-html = "outputs[input.id]" style="font-size:20px"></span>
 			</br>
@@ -247,8 +245,8 @@ Vue.component('exercise',{
 		</br>
 		<span v-html = "error" style="color:red;font-size:20px"></span>
 		</br>
-		<span>status:{{correctUntil}}</span>
 	    	<span v-if="correct" style="color:green;font-size:20px">Your answer is correct!</span>
+		<span v-else style="color:orange;font-size:20px">Partial Credit:{{score}}</span>
 		</br>
             	<span style="color:red">{{errors}}</span>
 	</div>
@@ -267,11 +265,11 @@ Vue.component('parent-component', {
 print("$1+1=?$")
 a = input()
 if a!="2":
-  raise Exception(f"Your answer is wrong! The answer of this question is not {a}")
+  raise Exception(f"Your answer is wrong! The answer of this question is not {a}")#score(0.2)
 print("You are correct, then please answer $2+2=?$")
 b = input()
 if b!="4":
-  raise Exception(rf"You are wrong , $2+2 \\neq {b}$!")
+  raise Exception(rf"You are wrong , $2+2 \\neq {b}$!")#score(0.4)
 				`,
 			    ind: 0,
 			    outputs: [],
@@ -281,6 +279,7 @@ if b!="4":
 			    correct:false, // This controls the showing of the words "Answer Correct". After the program successfully runs, it shows up.
 			    seed:0, // this is the random number seed.
 			    correctUntil:0,
+			    score:0,
 			    show:true
 	}],
 	fileName:"example.py",
@@ -305,23 +304,29 @@ if b!="4":
             <div v-if = "showFiles">
 		<repository @code="(x)=>{exercises[pointer].code = x}" @fileName="(x)=>{fileName=x}" @clearScreen="clearScreen" @restart="restart" @present="present"></repository>
 	</div>
-            <code-mirror v-else v-model="exercises[pointer].code" ></code-mirror>
+	<div v-else>
+	    <div style="background-color:black">
+		<button v-if="teacher" @click="restart">Run Code</button>
+		<button v-if="teacher" @click="downloadCode">Download Code</button>
+		<input v-if="teacher" style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
+	    </div>
+            <code-mirror v-model="exercises[pointer].code" ></code-mirror>
+	</div>
         </div>
 
        <div :style="{width:teacher?'40%':'100%'}" style="float:left;padding:2%">
-	    <button v-if="teacher" @click="restart">Run Code</button>
-            <button v-if="teacher" @click="downloadCode">Download Code</button>
-	    <input v-if="teacher" style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
 	    <button @click="teacher=!teacher">{{teacher?"Student Mode":"Teacher Mode"}}</button>
             <button @click="downloadStatus">Download Status</button>
 	    <input style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{uploadStatus(x)})}" id="input-file">
 	    <div v-for="(ex,key) in exercises" :key="ex.seed">
-		<span v-if="key==pointer" style="color:blue">Problem{{key}}:</span> 
-		<span v-else @click="pointer=key">Problem{{key}}:</span> 
+		<span v-if="key==pointer" style="color:red;background:lightblue">Problem{{key}}:</span> 
+		<span v-else @click="pointer=key" style="cursor: pointer">Problem{{key}}:</span> 
 			
 		<button @click="ex.show=!ex.show">{{ex.show?"Hide":"Show"}}</button>
-		<button @click="exercises.splice(key,1)">Delete Problem</button>
-		<exercise v-if="ex.show" :seed="ex.seed" :inputs="ex.inputs" :outputs="ex.outputs" :error="ex.error" :errors="ex.errors" :correct="ex.correct" :correctUntil="ex.correctUntil" @runPythonCode="()=>{pointer=key;runPythonCode()}"></exercise>
+		<button v-if="teacher" @click="exercises.splice(key,1)">Delete Problem</button>
+		<span v-if="teacher">Seed:</span>
+		    <input v-if="teacher" v-model = "ex.seed" @input = "pointer=key;runPythonCode()"></input>
+		<exercise v-if="ex.show" :seed="ex.seed" :inputs="ex.inputs" :outputs="ex.outputs" :error="ex.error" :errors="ex.errors" :correct="ex.correct" :score="ex.score" @runPythonCode="()=>{pointer=key;runPythonCode()}"></exercise>
 	    </div>
 		<button v-if="teacher" @click="exercises.push({code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:Math.random(),correctUntil:0,show:true})">Add Problem</button>
 
@@ -410,6 +415,7 @@ if b!="4":
 				errors:"",
 				correct:false,
 				correctUntil:0,
+				score:0,
 				show:true
 			})
 			this.pointer = this.exercises.length - 1
@@ -452,18 +458,36 @@ if b!="4":
 		this.pyodide.runPython("random.seed(_random_seed)")//reseed
 		this.pyodide.runPython("numpy.random.seed(int(123456789*_random_seed))")//reseed
 	},
-	prepareInput({line,context}){
-//		console.log(line)
-//		console.log(context)
+	parameters(context){// helper function
 		let splita = context.split("#")
-//		console.log(splita)
-		let rinima = splita[splita.length-1].split("(")
-//		console.log(rinima)
-		let caonima = rinima[1]==undefined?"":rinima[1].split(")")[0]
-//		console.log(caonima)
-		let parameters = caonima.split(",")
-		let type = rinima[0]
-//		context.split("#")[1].split("(")[0]
+		let type = ""
+		let parameters = []
+		if (splita.length > 1){
+			let rinima = splita[splita.length-1].split("(")
+			let caonima = rinima[1]==undefined?"":rinima[1].split(")")[0]
+			parameters = caonima.split(",")
+			type = rinima[0]
+		}
+		return {type,parameters} 
+	},
+	getscore(){
+		let lineno = this.exercises[this.pointer].correctUntil
+		let context = this.exercises[this.pointer].code.split('\n')[lineno-1]
+//		console.log("context")
+//		console.log(context)
+		let {type,parameters} = this.parameters(context)
+		if(type == "score"){
+			if(parameters.length > 0){
+				this.exercises[this.pointer].score = parameters[0]
+			}
+		}
+		
+	},
+//	parameters,type = parameters(context)
+	prepareInput({line,context}){
+		let {type,parameters} = this.parameters(context)
+		console.log(type)
+		console.log(parameters)
 		if(this.exercises[this.pointer].inputs[this.exercises[this.pointer].ind]==undefined){
 					Vue.set(this.exercises[this.pointer].inputs, this.exercises[this.pointer].ind, {indexCounter:this.indexCounter, id:this.exercises[this.pointer].ind,value:"", line:line, context:context, ready:false, type:type, parameters:parameters})
 					console.log(this.exercises[this.pointer].inputs[this.ind])
@@ -561,6 +585,7 @@ sympy.randMatrix = cuscus
 				this.exercises[this.pointer].error = e.message.substring(/Exception:.*$/gm.exec(e.message).index+11)
 				const match = e.message.match(/File "<exec>", line (\d+),/)
 				this.exercises[this.pointer].correctUntil = match?match[1]:0
+				this.getscore()
 			}
 		}            
             } else {
