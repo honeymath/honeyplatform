@@ -42,10 +42,30 @@ Vue.component('matrixinput', {
             addswitch: false
         };
     },
-    created() {
-     //   	this.localmatrix = JSON.parse(this.value);
+   mounted() {
+        this.updateLocalMatrix(this.value);
+    },
+	created() {
+        this.updateLocalMatrix(this.value);
+    },
+    watch: {
+        value(newValue) {
+            this.updateLocalMatrix(newValue);
+        }
     },
     methods: {
+	updateLocalMatrix(value) {
+            try {
+		if(value!=""){
+                	this.localmatrix = JSON.parse(value).map(this.transposeArray);
+		}else{
+			this.localmatrix = []
+		}
+            } catch (e) {
+                console.error('Error parsing value:', value);
+                console.error('Error parsing value:', e.message);
+            }
+        },
         trydata: function(e) {
             this.columntoadd = parseInt(e.offsetX / this.x);
             this.rowtoadd = parseInt(e.offsetY / this.y);

@@ -74,10 +74,194 @@ Vue.component('code-error', {
     props: ['error']
 });
 
+
+Vue.component('repository',{
+	//props: ['owner','repo'],
+	data(){
+		return{
+			owner: "honeymath",
+			repo:"mathProblems",
+			files: [],
+			path:[],
+			selectedFile: null,
+			serverResponse: false,// true if server responses, false if not
+			servarReady:false,//set ready once the dir browser is done.
+			serverError:"",
+			loginView:false,
+			fileName:""
+		}
+	},
+	 mounted() {
+    		console.log("start fetching git hub directory")
+	    this.fetchData()
+	    console.log("end fetching")
+	},
+	template: `
+<div>	
+		<div>
+			<button @click = "loginView=!loginView;if(!loginView){fetchData()}">{{loginView?"Return to current repository":"Change repository"}}</button>
+		  </div>
+
+                
+                <div v-if="loginView" style="padding:50px">
+                    Owner Name:<input v-model="owner"></input>
+                        </br>
+                        </br>
+                    Repository:<input v-model="repo"></input>
+                </div>
+                <div v-else>
+
+                	<button class="dir" @click="path = [];fetchData()"> \\ ROOT </button>
+
+                	<div v-if = "serverResponse">
+
+
+                		<div v-if="serverReady">
+                    			<div v-if="path.length>0">
+                        			<button class="dir" @click="path.pop();fetchData()">..</button>
+                    			</div>
+                   			 <div v-else>
+                       				 <span>Toppest Level</span>
+                    			</div>
+                		</div>
+                		<div v-else>
+                    			<div v-if="path.length>0">
+                        			<button class="dir">..</button>
+                    			</div>
+                   		 	<div v-else>
+                        			<span>Toppest Level</span>
+                    			</div>
+               			 </div>
+                    
+                		<div v-for="file in files">
+                    			<div v-if = "file.type=='file'">
+						<input 
+						    type="radio" 
+						    :value="file.name" 
+						    v-model="selectedFile" 
+						    :id="file.name"
+						    style="display:none"
+						/>
+						<label style="width:100%" :for="file.name" :class="selectedFile === file.name ? 'checked' : 'unchecked'" @click="fetchGithubContent(file.download_url)">
+							    {{ file.name }}
+						</label>
+					</div>
+					<div v-else>
+					    <button v-if="serverReady" class="dir" @click="path.push(file.name);fetchData()">{{file.name}}</button>
+					    <button v-else class="dir" @click="console.log('server is busy, waiting')">{{file.name}}</button>
+					</div>
+				</div>
+		      </div>
+		      <div v-else>
+			<span style="color:red">Can not find the content:{{serverError}}</span>
+		      </div>
+		</div>
+</div>
+	`,
+	methods: {
+		   fetchGithubDirectory: async function(owner, repo, path, callback) {
+		    this.serverReady = false
+		    this.serverError = ""
+		    const endpoint = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+		    const headers = {
+			'Accept': 'application/vnd.github.v3+json'
+		    };
+		    try {
+			const response = await this.$http.get(endpoint, { headers });
+			this.serverResponse = true
+			this.serverReady = true
+			this.files = response.data.map(file => ({
+			    name: file.name,
+			    path: file.path,
+			    type: file.type,
+			    download_url: file.download_url
+			}));
+			callback(null, this.files); // 直接返回原始响应数据
+		    } catch (error) {
+			this.serverResponse = false
+			this.serverError = error
+			console.error('Error fetching GitHub directory:', error);
+			callback(error, null); // 传递错误对象
+		    }
+		    },
+		    fetchGithubContent: async function(endpoint, callback = (a,b)=>{console.log(b)}) {
+			//this.clearScreen()
+			this.$emit('clearScreen')
+			//this.code = "#waiting for the server response...\n # File adress: " + endpoint
+			this.$emit('code', "#waiting for the server response...\n # File adress: " + endpoint)
+			const headers = { 'Accept': 'application/vnd.github.v3+json' };
+		    try {
+			const response = await this.$http.get(endpoint, { headers });
+			callback(null, response.bodyText); // 直接返回原始响应数据
+			//this.code = response.bodyText 
+			this.$emit('code', response.bodyText)
+			this.fileName = endpoint.split("/").pop()
+			this.$emit('fileName' , this.fileName)
+			if(this.fileName.split(".").pop()=="py"){
+	//			this.restart()
+				this.$emit('restart')
+			}else{
+		//		this.outputs = [response.bodyText]
+				this.$emit('present')
+			}
+		    } catch (error) {
+			console.error('Error fetching GitHub file:', error);
+			callback(error, null); // 传递错误对象
+		    }
+		    },
+		    fetchData() {// The testing.
+		//'honeymath', 'honeymath.github.io', ''
+			this.fetchGithubDirectory(this.owner, this.repo, this.path.join("/"), (error, files) => {
+			    if (error) {
+			console.error('Failed to fetch directory:', error);
+			    } else {
+				console.log('Directory files:', files);
+			    }
+			});
+		    },
+	}
+})
+
+Vue.component('exercise',{
+	props:['seed','inputs','outputs','error','errors','correct'],
+	data(){
+		return{
+			showSeed:false,
+		}
+	},
+	template:`
+	<div>
+	    <button @click="showSeed=!showSeed">{{showSeed?"Hide Seed":"Show Seed"}}</button>
+	    <input v-if="showSeed" v-model = "seed" @input = "$emit('runPythonCode')"></input>
+		<div v-for="input in inputs" :key="input.indexCounter">
+			<span v-html = "outputs[input.id]" style="font-size:20px"></span>
+			</br>
+			<div>
+				<textarea  v-if = "input.type != 'matrix'&& input.type !='matrixlist' " v-model="input.value" @input="input.ready = true;$emit('runPythonCode')"></textarea>
+				<matrixinput v-else v-model="input.value" @input="input.ready = true;$emit('runPythonCode')"></matrixinput>
+			</div>
+			</br>
+			<hr>
+		</div>	
+		<span v-html = "outputs[inputs.length]" style="font-size:20px"></span>
+		</br>
+		<span v-html = "error" style="color:red;font-size:20px"></span>
+		</br>
+	    	<span v-if="correct" style="color:green;font-size:20px">Your answer is correct!</span>
+		</br>
+            	<span style="color:red">{{errors}}</span>
+	</div>
+	`
+})
+
 Vue.component('parent-component', {
     data() {
         return {
-            code: `
+            pyodide: null,
+	    pointer:0,
+
+	    exercises:[{
+			    code: `
 print("$1+1=?$")
 a = input()
 if a!="2":
@@ -86,31 +270,18 @@ print("You are correct, then please answer $2+2=?$")
 b = input()
 if b!="4":
   raise Exception(rf"You are wrong , $2+2 \\neq {b}$!")
-`,
-            pyodide: null,
-	    ind: 0,
-            outputs: ['ri'],
-            results: ['fe'],
-	    error:"",
-            errors: "",
-            inputs: [],
-	    temp:"[]",
-	    indexCounter:0,
-            customInputExceptionMessage: 'CustomInputException: No input provided', // 自定义异常消息
-	    fileName:"example.py",
-	    correct:false, // This controls the showing of the words "Answer Correct". After the program successfully runs, it shows up.
+				`,
+			    ind: 0,
+			    outputs: ['ri'],
+			    error:"",
+			    errors: "fuck",
+			    inputs: [],
+			    correct:false, // This controls the showing of the words "Answer Correct". After the program successfully runs, it shows up.
+			    seed:0, // this is the random number seed.
+	}],
+	fileName:"example.py",
+	indexCounter:0,
         showFiles:false,// In code mode, files does not show up, but in browse file mode, it shows up
-        files: [],
-        selectedFile: null,
-        owner:"honeymath",
-        repo:"mathProblems",
-        serverResponse: false,// true if server responses, false if not
-        servarReady:false,//set ready once the dir browser is done.
-        serverError:"",
-        path:[],
-        loginView:false, // true if in a login view. Flase if not.
-	seed:0, // this is the random number seed.
-	showSeed:false,
 	requiredPackages:['sympy','numpy'],// the list of required packages, will add in the future.
 	loadingMessage:" Python platform is loading... Please wait.",
 	pythonReady: false
@@ -124,98 +295,31 @@ if b!="4":
                 <span style="color:lightblue">File Name =   </span>
                 <input v-model="fileName" style="border:none;background-color:black;color:lightgreen;font-size:25px"></input>
                 <button @click = "showFiles = !showFiles">{{showFiles?"Edit Code":"Browse Files"}}</button>
-                <button v-if="showFiles" @click = "loginView=!loginView;if(!loginView){fetchData()}">{{loginView?"Return to current repository":"Change repository"}}</button>
-            </div>
+              </div>
 
         <div style="width:55%;float:left">
-
             <div v-if = "showFiles">
-                
-                <div v-if="loginView" style="padding:50px">
-                    Owner Name:<input v-model="owner"></input>
-                        </br>
-                        </br>
-                    Repository:<input v-model="repo"></input>
-                </div>
-                <div v-else>
-
-                <button class="dir" @click="path = [];fetchData()"> \\ ROOT </button>
-
-                <div v-if = "serverResponse">
-
-
-                <div v-if="serverReady">
-                    <div v-if="path.length>0">
-                        <button class="dir" @click="path.pop();fetchData()">..</button>
-                    </div>
-                    <div v-else>
-                        <span>Toppest Level</span>
-                    </div>
-                </div>
-                <div v-else>
-                    <div v-if="path.length>0">
-                        <button class="dir">..</button>
-                    </div>
-                    <div v-else>
-                        <span>Toppest Level</span>
-                    </div>
-                </div>
-                    
-                <div v-for="file in files">
-                    <div v-if = "file.type=='file'">
-                        <input 
-                            type="radio" 
-                            :value="file.name" 
-                            v-model="selectedFile" 
-                            :id="file.name"
-                            style="display:none"
-                        />
-                        <label style="width:100%" :for="file.name" :class="selectedFile === file.name ? 'checked' : 'unchecked'" @click="fetchGithubContent(file.download_url)">
-                            {{ file.name }}
-                        </label>
-                        </div>
-                        <div v-else>
-                            <button v-if="serverReady" class="dir" @click="path.push(file.name);fetchData()">{{file.name}}</button>
-                            <button v-else class="dir" @click="console.log('server is busy, waiting')">{{file.name}}</button>
-                        </div>
-                    </div>
-              </div>
-              <div v-else>
-                <span style="color:red">Can not find the content:{{serverError}}</span>
-              </div>
-              </div>
-
-
-
-            </div>
-
-            <code-mirror v-else v-model="code" ></code-mirror>
+		<repository @code="(x)=>{exercises[pointer].code = x}" @fileName="(x)=>{fileName=x}" @clearScreen="clearScreen" @restart="restart" @present="present"></repository>
+	</div>
+            <code-mirror v-else v-model="exercises[pointer].code" ></code-mirror>
         </div>
 
-	<!--textarea v-model="inputs[0].value"></textarea-->
        <div style="width:40%;float:left;padding:2%">
 	    <button @click="restart">Run Code</button>
             <button @click="downloadCode">Download Code</button>
-            <button @click="showSeed=!showSeed">{{showSeed?"Hide Seed":"Show Seed"}}</button>
-	    <input style="width:200px" type="file" v-on:change="getFile" id="input-file">
-	    <input v-if="showSeed" v-model = "seed" @input = "runPythonCode()"></input>
-		<div v-for="input in inputs" :key="input.indexCounter">
-			<span v-html = "outputs[input.id]" style="font-size:20px"></span>
-			</br>
-			<div>
-				<textarea  v-if = "input.type != 'matrix'&& input.type !='matrixlist' " v-model="input.value" @input="input.ready = true;runPythonCode()"></textarea>
-				<matrixinput v-else v-model="input.value" @input="input.ready = true;runPythonCode()"></matrixinput>
-			</div>
-			</br>
-			<hr>
-		</div>	
-		<span v-html = "outputs[inputs.length]" style="font-size:20px"></span>
-		</br>
-		<span v-html = "error" style="color:red;font-size:20px"></span>
-		</br>
-	    	<span v-if="correct" style="color:green;font-size:20px">Your answer is correct!</span>
-		</br>
-            	<span style="color:red">{{errors}}</span>
+	    <input style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
+            <button @click="downloadStatus">Download Status</button>
+	    <input style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{uploadStatus(x)})}" id="input-file">
+		<exercise v-for="(ex,key) in exercises" :key="ex.seed" :seed="ex.seed" :inputs="ex.inputs" :outputs="ex.outputs" :error="ex.error" :errors="ex.errors" :correct="ex.correct" @runPythonCode="()=>{pointer=key;runPythonCode()}"></exercise>
+
+
+
+
+
+
+
+
+
             
        </div>
 </div>
@@ -230,9 +334,6 @@ if b!="4":
 					 }catch(e){}
 	    })},
     mounted() {
-    console.log("start fetching git hub directory")
-    this.fetchData()
-    console.log("end fetching")
 
 	document.addEventListener('pythonEvent', (event) => {
            // const params = event;
@@ -240,7 +341,7 @@ if b!="4":
            // alert(`JavaScript function called with parameters: ${JSON.stringify(params)}`);
 		this.prepareInput({
 			line: event.lineno,
-			context: this.code.split('\n')[event.lineno - 1]
+			context: this.exercises[this.pointer].code.split('\n')[event.lineno - 1]
 		})
 		//let line = event.lineno
 		//let context = this.code.split('\n')[line-1]
@@ -252,45 +353,85 @@ if b!="4":
     methods: {
 	restart(){
 		//this.pyodide.runPython("_random_array = []")
-		this.seed = Math.random()
-		this.inputs.splice(0,)
-		this.runPythonCode()
+
+		//this.exercises[this.pointer].seed = Math.random()
+		//this.exercises[this.pointer].inputs.splice(0,)
+		//this.runPythonCode()
+		this.exercises.forEach((obj,ind)=>{
+			obj.seed = Math.random()
+			obj.inputs.splice(0,)
+			this.pointer = ind
+			this.runPythonCode()
+		})
+	},
+	present(){
+		this.exercises[this.pointer].outputs = [this.exercises[this.pointer].code]
 	},
 	downloadCode(){
-		todown = this.code
+		this.download(this.exercises[this.pointer].code, this.fileName)
+	},
+	downloadStatus(){
+		var dict = []
+		this.exercises.forEach((obj,ind)=>{
+			dict.push({
+				code:obj.code,
+				inputs:obj.inputs,
+				seed:obj.seed
+				})
+		})
+		this.download(JSON.stringify(dict),"status.json")
+	},
+	uploadStatus(text){
+		var dict = JSON.parse(text)
+		this.exercises.splice(0,)
+		dict.forEach((obj,ind)=>{
+			this.exercises.push({
+				ind:0,
+				code:obj.code,	
+				inputs:obj.inputs,
+				seed:obj.seed,
+				outputs:[],
+				error:"",
+				errors:"",
+				correct:false
+			})
+			this.pointer = this.exercises.length - 1
+			this.runPythonCode()
+		})
+		
+	},
+	download(todown,fileName){
 		var element = document.createElement('a');
                 element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(todown));
-                element.setAttribute('download', this.fileName);
+                element.setAttribute('download', fileName);
                 element.style.display = 'none';
                 document.body.appendChild(element);
                 element.click();
                 document.body.removeChild(element);
 	},
 	clearScreen(){//not sure if this is required?
-		this.ind = 0
-		this.inputs.splice(0,)
-		this.outputs = ["Please Wait while the system is compiling the script ... "]
-		this.results = []
-		this.errors = ""
-		this.error = ""
+		this.exercises[this.pointer].ind = 0
+		this.exercises[this.pointer].inputs.splice(0,)
+		this.exercises[this.pointer].outputs = ["Please Wait while the system is compiling the script ... "]
+		this.exercises[this.pointer].errors = ""
+		this.exercises[this.pointer].error = ""
 		this.pyodide.runPython("_random_index = 0")
-		this.correct = false
+		this.exercises[this.pointer].correct = false
 	},
 	initialize(){// initialize all parameters.
-		this.ind = 0
+		this.exercises[this.pointer].ind = 0
 //		this.inputs.splice(0,)
-		this.outputs = []
-		this.results = []
-		this.errors = ""
-		this.error = ""
+		this.exercises[this.pointer].outputs = []
+		this.exercises[this.pointer].errors = ""
+		this.exercises[this.pointer].error = ""
 //		this.pyodide.runPython("_random_index = 0")
 		this.reseed()
-		this.correct = false
+		this.exercises[this.pointer].correct = false
 	},
 	reseed(){
 		this.pyodide.runPython("import random")
 		this.pyodide.runPython("import numpy")
-		this.pyodide.runPython("_random_seed = "+this.seed)
+		this.pyodide.runPython("_random_seed = "+this.exercises[this.pointer].seed)
 		this.pyodide.runPython("random.seed(_random_seed)")//reseed
 		this.pyodide.runPython("numpy.random.seed(int(123456789*_random_seed))")//reseed
 	},
@@ -306,23 +447,24 @@ if b!="4":
 		let parameters = caonima.split(",")
 		let type = rinima[0]
 //		context.split("#")[1].split("(")[0]
-		if(this.inputs[this.ind]==undefined){
-					Vue.set(this.inputs, this.ind, {indexCounter:this.indexCounter, id:this.ind,value:"", line:line, context:context, ready:false, type:type, parameters:parameters})
-					console.log(this.inputs[this.ind])
+		if(this.exercises[this.pointer].inputs[this.exercises[this.pointer].ind]==undefined){
+					Vue.set(this.exercises[this.pointer].inputs, this.exercises[this.pointer].ind, {indexCounter:this.indexCounter, id:this.exercises[this.pointer].ind,value:"", line:line, context:context, ready:false, type:type, parameters:parameters})
+					console.log(this.exercises[this.pointer].inputs[this.ind])
 					this.indexCounter += 1
 				}
 	},
-	getFile: function(event) {
+	getFile: function(event,callback) {
 	            const input = event.target
                 if ('files' in input && input.files.length > 0) {
 	                this.placeFileContent(
-                            input.files[0])
+                            input.files[0],callback)
                     }
                 input.value=""
                 },
-            placeFileContent: function(file) {
+            placeFileContent: function(file,callback) {
 	                this.readFileContent(file).then(content => {
-  	                this.code = content
+				callback(content)
+  	                	//this.exercises[this.pointer].code = content
 			if(this.autoupload){
 				this.upload()
 			}
@@ -340,9 +482,8 @@ if b!="4":
 		this.pythonReady = false
 		let total = this.requiredPackages.length
             	this.pyodide = await loadPyodide({
-			stdin: ()=>{ if(this.inputs[this.ind]==undefined || !this.inputs[this.ind].ready){ throw "This error is throwed by me to stop the python code. I can not control Pyodide, it throw my error without my control. Don't worry, it would not destroy the earth. " } this.ind += 1; return this.inputs[this.ind-1].value },
-			stdout: (output) => {Vue.set(this.outputs,this.ind,this.outputs[this.ind]==undefined?output+'\n':this.outputs[this.ind]+ output + '\n') },
-			stderr: (output)=>{this.errors = output}	
+			stdin: ()=>{ if(this.exercises[this.pointer].inputs[this.exercises[this.pointer].ind]==undefined || !this.exercises[this.pointer].inputs[this.exercises[this.pointer].ind].ready){ throw "This error is throwed by me to stop the python code. I can not control Pyodide, it throw my error without my control. Don't worry, it would not destroy the earth. " } this.exercises[this.pointer].ind += 1; return this.exercises[this.pointer].inputs[this.exercises[this.pointer].ind-1].value },
+			stdout: (output) => {Vue.set(this.exercises[this.pointer].outputs,this.exercises[this.pointer].ind,this.exercises[this.pointer].outputs[this.exercises[this.pointer].ind]==undefined?output+'\n':this.exercises[this.pointer].outputs[this.exercises[this.pointer].ind]+ output + '\n') }
 		});
 //        let micropip = this.pyodide.pyimport("sympy");
     const loadPackagePromises = this.requiredPackages.map((pack) => {
@@ -387,80 +528,24 @@ sympy.randMatrix = cuscus
 		console.log("load complicated")
 		
         },
-    fetchGithubDirectory: async function(owner, repo, path, callback) {
-//    console.log("version:13:15")
-    this.serverReady = false
-    this.serverError = ""
-    const endpoint = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    const headers = {
-        'Accept': 'application/vnd.github.v3+json'
-    };
-//    console.log(this.$http)
-    try {
-        const response = await this.$http.get(endpoint, { headers });
-        this.serverResponse = true
-        this.serverReady = true
-        this.files = response.data.map(file => ({
-            name: file.name,
-            path: file.path,
-            type: file.type,
-            download_url: file.download_url
-        }));
-        callback(null, this.files); // 直接返回原始响应数据
-    } catch (error) {
-        this.serverResponse = false
-        this.serverError = error
-        console.error('Error fetching GitHub directory:', error);
-        callback(error, null); // 传递错误对象
-    }
-    },
-    fetchGithubContent: async function(endpoint, callback = (a,b)=>{console.log(b)}) {
-	this.clearScreen()
-        this.code = "#waiting for the server response...\n # File adress: " + endpoint
-        const headers = { 'Accept': 'application/vnd.github.v3+json' };
-    try {
-        const response = await this.$http.get(endpoint, { headers });
-        callback(null, response.bodyText); // 直接返回原始响应数据
-        this.code = response.bodyText 
-        this.fileName = endpoint.split("/").pop()
-	if(this.fileName.split(".").pop()=="py"){
-		this.restart()
-	}else{
-		this.outputs = [response.bodyText]
-	}
-    } catch (error) {
-        console.error('Error fetching GitHub file:', error);
-        callback(error, null); // 传递错误对象
-    }
-    },
-    fetchData() {// The testing.
-//'honeymath', 'honeymath.github.io', ''
-        this.fetchGithubDirectory(this.owner, this.repo, this.path.join("/"), (error, files) => {
-            if (error) {
-                console.error('Failed to fetch directory:', error);
-            } else {
-                console.log('Directory files:', files);
-            }
-        });
-    },
-        runPythonCode() {
+         runPythonCode() {
 		this.initialize()
             if (this.pyodide) {
 		
       		try{
-                    Vue.set(this.results,0, this.pyodide.runPython(this.code))
-		    this.correct = true
+                    this.pyodide.runPython(this.exercises[this.pointer].code)
+		    this.exercises[this.pointer].correct = true
 		}catch(e){
 			if(e.type!="OSError" && e.type!="Exception"){   // this excludes the input error, fuck it out.
-				this.errors = "Python Error:\n"+e.message
+				this.exercises[this.pointer].errors = "Python Error:\n"+e.message
 			}
 			else if(e.type=="Exception"){
-				this.inputs.splice(this.ind,)
-			this.error = e.message.substring(/Exception:.*$/gm.exec(e.message).index+11)
+				this.exercises[this.pointer].inputs.splice(this.exercises[this.pointer].ind,)
+			this.exercises[this.pointer].error = e.message.substring(/Exception:.*$/gm.exec(e.message).index+11)
 			}
 		}            
             } else {
-                this.output = 'Pyodide is not loaded yet.';
+                console.log('Pyodide is not loaded yet.');
             }
         }
     }
