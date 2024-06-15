@@ -322,7 +322,7 @@ if b!="4":
 			<button v-if="teacher" @click="downloadCode">Download Code</button>
 			<input v-if="teacher" style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
 		    </div>
-		    <code-mirror v-model="exercises[pointer].code" ></code-mirror>
+		    <code-mirror v-if="exercises[pointer]!=undefined" v-model="exercises[pointer].code" ></code-mirror>
 		</div>
        </div>
 		
@@ -351,7 +351,7 @@ if b!="4":
 
 
 
-		<button v-if="teacher" @click="exercises.push({key:indexCounter,code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:globalSeed===undefined?Math.random():globalSeed,correctUntil:0,show:true});indexCounter+=1;pointer = exercises.length-1">Add Problem</button>
+		<button v-if="teacher" @click="exercises.push({key:indexCounter,code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:globalSeed===undefined?Math.floor(123456789*Math.random()):globalSeed,correctUntil:0,show:true});indexCounter+=1;pointer = exercises.length-1">Add Problem</button>
 	</div>
        </div>
 </div>
@@ -392,7 +392,7 @@ if b!="4":
 		//this.runPythonCode()
 		var pointer_backup = this.pointer
 		this.exercises.forEach((obj,ind)=>{
-			obj.seed = this.globalSeed === undefined?Math.random():this.globalSeed
+			obj.seed = this.globalSeed === undefined?Math.floor(123456789*Math.random()):this.globalSeed
 			obj.inputs.splice(0,)
 			obj.score = 0
 			this.pointer = ind
@@ -404,7 +404,7 @@ if b!="4":
 		this.exercises[this.pointer].outputs = [this.exercises[this.pointer].code]
 	},
 	updateGlobalSeed(){
-		this.globalSeed = "0."+this.studentNumber
+		this.globalSeed = this.studentNumber
 		this.fileName = this.studentNumber + ".json"
 		this.exercises.forEach((obj,ind)=>{
 			obj.seed = this.globalSeed === undefined?obj.seed:this.globalSeed
@@ -490,7 +490,7 @@ if b!="4":
 		this.pyodide.runPython("import numpy")
 		this.pyodide.runPython("_random_seed = "+this.exercises[this.pointer].seed)
 		this.pyodide.runPython("random.seed(_random_seed)")//reseed
-		this.pyodide.runPython("numpy.random.seed(int(123456789*_random_seed))")//reseed
+		this.pyodide.runPython("numpy.random.seed(_random_seed)")//reseed
 	},
 	parameters(context){// helper function
 		let splita = context.split("#")
