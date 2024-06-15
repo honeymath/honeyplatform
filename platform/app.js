@@ -246,33 +246,36 @@ Vue.component('exercise',{
 		<span v-html = "error" style="color:red;font-size:20px"></span>
 		</br>
 	    	<span v-if="correct" style="color:green;font-size:20px">Your answer is correct!</span>
-		<span v-else style="color:orange;font-size:20px">Partial Credit:{{score}}</span>
+		<span v-else style="color:orange;font-size:20px"><span v-if="score>0">Partial Credit:{{score}}</span></span>
 		</br>
             	<span style="color:red">{{errors}}</span>
 	</div>
 	`
 })
 
+
 Vue.component('parent-component', {
     data() {
         return {
             pyodide: null,
 	    pointer:0,
-	    teacher:true,
-
-	    exercises:[{
-			    code: `
+	    teacher:!student,
+	    teacherToggle:!student,
+	    backupcodeNotUsedPleaseDelete:`
 print("$1+1=?$")
 a = input()
 if a!="2":
-  raise Exception(f"Your answer is wrong! The answer of this question is not {a}")#score(0.2)
+  raise Exception(f"Your answer is wrong! The answer of this question is not {a}")#score = 0.2
 print("You are correct, then please answer $2+2=?$")
 b = input()
 if b!="4":
-  raise Exception(rf"You are wrong , $2+2 \\neq {b}$!")#score(0.4)
+  raise Exception(rf"You are wrong , $2+2 \\neq {b}$!")#score = 0.4
 				`,
+	    exercises:[{
+			    key:-1,
+			    code: student?'print("Please click Choose File to upload exercises. Once finished, please click save to download the file. You may save your partial work and upload the file to continue anytime. Once you finished the exercise, just submit your downloaded work to the teacher.")':'print("Please browse exercises to compose a problem set. Once you finished, click save to save your problem set. Your student then is able to use your problem set to do exercises.")',
 			    ind: 0,
-			    outputs: [],
+			    outputs: ["fe"],
 			    error:"",
 			    errors: "",
 			    inputs: [],
@@ -287,7 +290,9 @@ if b!="4":
         showFiles:false,// In code mode, files does not show up, but in browse file mode, it shows up
 	requiredPackages:['sympy','numpy'],// the list of required packages, will add in the future.
 	loadingMessage:" Python platform is loading... Please wait.",
-	pythonReady: false
+	pythonReady: false,
+	globalSeed:undefined,
+	studentNumber:undefined,
         };
     },
     template: `
@@ -297,7 +302,7 @@ if b!="4":
                 <a href="/" style="color:white">Return to Home</a> 
                 <span style="color:lightblue">File Name =   </span>
                 <input v-model="fileName" style="border:none;background-color:black;color:lightgreen;font-size:25px"></input>
-                <button @click = "showFiles = !showFiles">{{showFiles?"Edit Code":"Browse Files"}}</button>
+                <button @click = "showFiles = !showFiles">{{showFiles?"Edit Code":"Browse Problems"}}</button>
               </div>
 
         <div v-if="teacher" style="width:55%;float:left">
@@ -312,13 +317,22 @@ if b!="4":
 	    </div>
             <code-mirror v-model="exercises[pointer].code" ></code-mirror>
 	</div>
-        </div>
+       </div>
+	<div v-if = "!teacher && globalSeed==undefined">
+		Student Number: <input type="text" v-model="studentNumber"></input> <button @click="updateGlobalSeed">Enter System</button>
+	</div>
 
-       <div :style="{width:teacher?'40%':'100%'}" style="float:left;padding:2%">
-	    <button @click="teacher=!teacher">{{teacher?"Student Mode":"Teacher Mode"}}</button>
-            <button @click="downloadStatus">Download Status</button>
+       <div v-else :style="{width:teacher?'40%':'100%'}" style="float:left;padding:2%">
+	
+	<div>
+	    <button v-if="teacherToggle" @click="teacher=!teacher;globalSeed = undefined;restart()">{{teacher?"Student Mode":"Teacher Mode"}}</button>
+            <button @click="downloadStatus">Save/Download</button>
 	    <input style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{uploadStatus(x)})}" id="input-file">
-	    <div v-for="(ex,key) in exercises" :key="ex.seed">
+	    <!--button v-if="teacher" @click="globalSeed = undefined;restart()">Randomize Question</button-->
+
+		    
+
+	    <div v-if="teacher || globalSeed!=undefined" v-for="(ex,key) in exercises" :key="ex.key">
 		<span v-if="key==pointer" style="color:red;background:lightblue">Problem{{key}}:</span> 
 		<span v-else @click="pointer=key" style="cursor: pointer">Problem{{key}}:</span> 
 			
@@ -328,7 +342,10 @@ if b!="4":
 		    <input v-if="teacher" v-model = "ex.seed" @input = "pointer=key;runPythonCode()"></input>
 		<exercise v-if="ex.show" :seed="ex.seed" :inputs="ex.inputs" :outputs="ex.outputs" :error="ex.error" :errors="ex.errors" :correct="ex.correct" :score="ex.score" @runPythonCode="()=>{pointer=key;runPythonCode()}"></exercise>
 	    </div>
-		<button v-if="teacher" @click="exercises.push({code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:Math.random(),correctUntil:0,show:true})">Add Problem</button>
+
+
+
+		<button v-if="teacher" @click="exercises.push({key:indexCounter,code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:globalSeed===undefined?Math.random():globalSeed,correctUntil:0,show:true});indexCounter+=1">Add Problem</button>
 
 
 
@@ -337,7 +354,7 @@ if b!="4":
 
 
 
-
+	</div>
             
        </div>
 </div>
@@ -377,8 +394,9 @@ if b!="4":
 		//this.runPythonCode()
 		var pointer_backup = this.pointer
 		this.exercises.forEach((obj,ind)=>{
-			obj.seed = Math.random()
+			obj.seed = this.globalSeed === undefined?Math.random():this.globalSeed
 			obj.inputs.splice(0,)
+			obj.score = 0
 			this.pointer = ind
 			this.runPythonCode()
 		})
@@ -386,6 +404,15 @@ if b!="4":
 	},
 	present(){
 		this.exercises[this.pointer].outputs = [this.exercises[this.pointer].code]
+	},
+	updateGlobalSeed(){
+		this.globalSeed = "0."+this.studentNumber
+		this.fileName = this.studentNumber + ".json"
+		this.exercises.forEach((obj,ind)=>{
+			obj.seed = this.globalSeed === undefined?obj.seed:this.globalSeed
+			this.pointer = ind
+			this.runPythonCode()
+		})
 	},
 	downloadCode(){
 		this.download(this.exercises[this.pointer].code, this.fileName)
@@ -406,10 +433,11 @@ if b!="4":
 		this.exercises.splice(0,)
 		dict.forEach((obj,ind)=>{
 			this.exercises.push({
+				key:this.indexCounter,
 				ind:0,
 				code:obj.code,	
 				inputs:obj.inputs,
-				seed:obj.seed,
+				seed:this.globalSeed === undefined?obj.seed:this.globalSeed,
 				outputs:[],
 				error:"",
 				errors:"",
@@ -420,6 +448,7 @@ if b!="4":
 			})
 			this.pointer = this.exercises.length - 1
 			this.runPythonCode()
+			this.indexCounter += 1
 		})
 		
 	},
@@ -475,11 +504,14 @@ if b!="4":
 		let context = this.exercises[this.pointer].code.split('\n')[lineno-1]
 //		console.log("context")
 //		console.log(context)
-		let {type,parameters} = this.parameters(context)
-		if(type == "score"){
-			if(parameters.length > 0){
-				this.exercises[this.pointer].score = parameters[0]
-			}
+		let splita = context.split("#")
+		let ll = splita.length
+		if(ll > 1){
+			this.pyodide.runPython(splita[ll-1])
+		}
+		let result = this.pyodide.runPython("score")
+		if(result != ""){
+			this.exercises[this.pointer].score = result
 		}
 		
 	},
@@ -566,7 +598,8 @@ sympy.randMatrix = cuscus
 	this.initialize()
 // This is preloading fucage. redefine input, later on we will realize redefine random.
 	this.pythonReady = true
-		console.log("load complicated")
+	console.log("load complicated")
+	this.runPythonCode()
 		
         },
          runPythonCode() {
