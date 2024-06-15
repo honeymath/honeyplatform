@@ -348,7 +348,7 @@ if b!="4":
 
 
 
-		<button v-if="teacher" @click="exercises.push({key:indexCounter,code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:globalSeed===undefined?Math.random():globalSeed,correctUntil:0,show:true});indexCounter+=1">Add Problem</button>
+		<button v-if="teacher" @click="exercises.push({key:indexCounter,code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:globalSeed===undefined?Math.random():globalSeed,correctUntil:0,show:true});indexCounter+=1;pointer = exercises.length-1">Add Problem</button>
 	</div>
        </div>
 </div>
