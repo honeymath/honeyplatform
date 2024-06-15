@@ -580,7 +580,6 @@ if b!="4":
 //        await this.pyodide.loadPackage("sympy");
 //        await this.pyodide.loadPackage("numpy");
 		this.loadingMessage = "Running preloading scripts. These scripts is important to syncronize the random seed and redirect I/O..."
-	console.log("loading rinimabi")
 		let rinimabi = this.pyodide.runPythonAsync(`import inspect
 import js
 
@@ -609,9 +608,7 @@ def cuscus(*args,**kwargs):
 
 sympy.randMatrix = cuscus
 `)
-	console.log("start waiting fuck")
 	await Promise.all([rinimabi,caonimabi])
-	console.log("waiting fucked")
 //	this.reseed()
 	this.initialize()
 // This is preloading fucage. redefine input, later on we will realize redefine random.
@@ -628,7 +625,7 @@ sympy.randMatrix = cuscus
                     this.pyodide.runPython(this.exercises[this.pointer].code)
 		    this.exercises[this.pointer].correct = true
 		}catch(e){
-			if(e.type!="OSError" && e.type!="Exception"){   // this excludes the input error, fuck it out.
+			if(e.type!="OSError" && e.type!="Exception"){   // this excludes the input error, 
 				this.exercises[this.pointer].errors = "Python Error:\n"+e.message
 			}
 			else if(e.type=="Exception"){
