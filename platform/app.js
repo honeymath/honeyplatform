@@ -318,8 +318,8 @@ if b!="4":
             <code-mirror v-model="exercises[pointer].code" ></code-mirror>
 	</div>
        </div>
-	<div v-if = "!teacher && globalSeed==undefined">
-		Student Number: <input type="text" v-model="studentNumber"></input> <button @click="updateGlobalSeed">Enter System</button>
+	<div style="display: flex; justify-content: center; background-color:lightgreen; align-items: center; height: 100vh;" v-if = "!teacher && globalSeed==undefined">
+		Student Number:   <input type="text" v-model="studentNumber"></input> <button @click="updateGlobalSeed">Enter System</button>
 	</div>
 
        <div v-else :style="{width:teacher?'40%':'100%'}" style="float:left;padding:2%">
