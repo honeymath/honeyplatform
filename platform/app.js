@@ -287,7 +287,7 @@ if b!="4":
 	}],
 	fileName:"example.py",
 	indexCounter:0,
-        showFiles:false,// In code mode, files does not show up, but in browse file mode, it shows up
+        showFiles:!student,// In code mode, files does not show up, but in browse file mode, it shows up
 	requiredPackages:['sympy','numpy'],// the list of required packages, will add in the future.
 	loadingMessage:" Python platform is loading... Please wait.",
 	pythonReady: false,
@@ -297,6 +297,12 @@ if b!="4":
     },
     template: `
 <div>
+<div style="display: flex; justify-content: center; background-color:lightgreen; align-items: center; height: 100vh;" v-if = "!teacher && globalSeed==undefined">
+		Student Number:   <input v-if="pythonReady" type="text" v-model="studentNumber"></input> <button v-if="pythonReady" @click="updateGlobalSeed">Enter System</button>
+</div>
+
+<div v-else>
+
 <div v-if = "pythonReady">
             <div v-if="teacher" style="width:100%;height:40px;background-color:black">
                 <a href="/" style="color:white">Return to Home</a> 
@@ -306,23 +312,20 @@ if b!="4":
               </div>
 
         <div v-if="teacher" style="width:55%;float:left">
-            <div v-if = "showFiles">
-		<repository @code="(x)=>{exercises[pointer].code = x}" @fileName="(x)=>{fileName=x}" @clearScreen="clearScreen" @restart="restart" @present="present"></repository>
-	</div>
-	<div v-else>
-	    <div style="background-color:black">
-		<button v-if="teacher" @click="restart">Run Code</button>
-		<button v-if="teacher" @click="downloadCode">Download Code</button>
-		<input v-if="teacher" style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
-	    </div>
-            <code-mirror v-model="exercises[pointer].code" ></code-mirror>
-	</div>
+		<div v-if = "showFiles">
+			<repository @code="(x)=>{exercises[pointer].code = x}" @fileName="(x)=>{fileName=x}" @clearScreen="clearScreen" @restart="restart" @present="present"></repository>
+		</div>
+		<div v-else>
+		    <div style="background-color:black">
+			<button v-if="teacher" @click="restart">Run Code</button>
+			<button v-if="teacher" @click="downloadCode">Download Code</button>
+			<input v-if="teacher" style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
+		    </div>
+		    <code-mirror v-model="exercises[pointer].code" ></code-mirror>
+		</div>
        </div>
-	<div style="display: flex; justify-content: center; background-color:lightgreen; align-items: center; height: 100vh;" v-if = "!teacher && globalSeed==undefined">
-		Student Number:   <input type="text" v-model="studentNumber"></input> <button @click="updateGlobalSeed">Enter System</button>
-	</div>
-
-       <div v-else :style="{width:teacher?'40%':'100%'}" style="float:left;padding:2%">
+		
+       <div :style="{width:teacher?'40%':'100%'}" style="float:left;padding:2%">
 	
 	<div>
 	    <button v-if="teacherToggle" @click="teacher=!teacher;globalSeed = undefined;restart()">{{teacher?"Student Mode":"Teacher Mode"}}</button>
@@ -346,20 +349,12 @@ if b!="4":
 
 
 		<button v-if="teacher" @click="exercises.push({key:indexCounter,code:'',ind:0,outputs:[],error:'',errors:'',inputs:[],correct:false,seed:globalSeed===undefined?Math.random():globalSeed,correctUntil:0,show:true});indexCounter+=1">Add Problem</button>
-
-
-
-
-
-
-
-
 	</div>
-            
        </div>
 </div>
 <div v-else>
 {{loadingMessage}}
+</div>
 </div>
 </div>
     `,
@@ -566,11 +561,13 @@ if b!="4":
 
     // Wait for all packages to be loaded
     this.loadingMessage = "Loading packages...";
+	console.log("try loading packs")
     await Promise.all(loadPackagePromises);
 //        await this.pyodide.loadPackage("sympy");
 //        await this.pyodide.loadPackage("numpy");
 		this.loadingMessage = "Running preloading scripts. These scripts is important to syncronize the random seed and redirect I/O..."
-		this.pyodide.runPython(`import inspect
+	console.log("loading rinimabi")
+		let rinimabi = this.pyodide.runPythonAsync(`import inspect
 import js
 
 system_input = input
@@ -583,7 +580,11 @@ def custom_input(args=''):
 	return system_input()
 
 input = custom_input
+`)
 
+	console.log("loading caonimabi")
+	let caonimabi = this.pyodide.runPythonAsync(
+`
 import sympy
 original_randMatrix = sympy.randMatrix
 
@@ -594,6 +595,9 @@ def cuscus(*args,**kwargs):
 
 sympy.randMatrix = cuscus
 `)
+	console.log("start waiting fuck")
+	await Promise.all([rinimabi,caonimabi])
+	console.log("waiting fucked")
 //	this.reseed()
 	this.initialize()
 // This is preloading fucage. redefine input, later on we will realize redefine random.
