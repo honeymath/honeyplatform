@@ -421,7 +421,7 @@ if b!="4":
 				seed:obj.seed
 				})
 		})
-		this.download(JSON.stringify(dict),this.fileName)
+		this.download(JSON.stringify(dict),this.teacher?"exercises.json":this.fileName)
 	},
 	uploadStatus(text){
 		var dict = JSON.parse(text)
