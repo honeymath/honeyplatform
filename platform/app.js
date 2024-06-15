@@ -421,7 +421,7 @@ if b!="4":
 				seed:obj.seed
 				})
 		})
-		this.download(JSON.stringify(dict),"status.json")
+		this.download(JSON.stringify(dict),this.fileName)
 	},
 	uploadStatus(text){
 		var dict = JSON.parse(text)
