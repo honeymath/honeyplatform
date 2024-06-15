@@ -423,7 +423,7 @@ if b!="4":
 			dict.push({
 				code:obj.code,
 //				inputs:this.evaluation?(obj.inputs.filter(input => input.ready)):obj.inputs,
-				inputs:this.evaluation?[]:obj.inputs,
+				inputs:this.evaluation&&this.teacher?[]:obj.inputs,
 				seed:obj.seed
 				})
 		})
