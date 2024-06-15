@@ -293,6 +293,7 @@ if b!="4":
 	pythonReady: false,
 	globalSeed:undefined,
 	studentNumber:undefined,
+	evaluation:false
         };
     },
     template: `
@@ -329,7 +330,9 @@ if b!="4":
 	
 	<div>
 	    <button v-if="teacherToggle" @click="teacher=!teacher;globalSeed = undefined;restart()">{{teacher?"Student Mode":"Teacher Mode"}}</button>
-            <button @click="downloadStatus">Save/Download</button>
+            <button @click="downloadStatus()">Save/Download</button>
+	    <input v-if="teacher" type="checkbox" v-model="evaluation"><span v-if="teacher">Evaluation Script</span></input>
+	    <button v-if="teacher" @click="restart">Refresh</button>
 	    <input style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{uploadStatus(x)})}" id="input-file">
 	    <!--button v-if="teacher" @click="globalSeed = undefined;restart()">Randomize Question</button-->
 
@@ -414,24 +417,31 @@ if b!="4":
 	},
 	downloadStatus(){
 		var dict = []
+		console.log(this.evaluation)
 		this.exercises.forEach((obj,ind)=>{
+			
 			dict.push({
 				code:obj.code,
-				inputs:obj.inputs,
+//				inputs:this.evaluation?(obj.inputs.filter(input => input.ready)):obj.inputs,
+				inputs:this.evaluation?[]:obj.inputs,
 				seed:obj.seed
 				})
 		})
 		this.download(JSON.stringify(dict),this.teacher?"exercises.json":this.fileName)
 	},
 	uploadStatus(text){
+//		console.log(text)
 		var dict = JSON.parse(text)
-		this.exercises.splice(0,)
+		console.log(dict)
+		
+		var tempExercises = this.exercises.splice(0,)
+//		var sum = 0
 		dict.forEach((obj,ind)=>{
 			this.exercises.push({
 				key:this.indexCounter,
 				ind:0,
 				code:obj.code,	
-				inputs:obj.inputs,
+				inputs:obj.inputs.length==0 && tempExercises[ind]!= undefined && tempExercises[ind].inputs!= undefined ? tempExercises[ind].inputs : obj.inputs,
 				seed:this.globalSeed === undefined?obj.seed:this.globalSeed,
 				outputs:[],
 				error:"",
@@ -515,7 +525,11 @@ if b!="4":
 		let {type,parameters} = this.parameters(context)
 		console.log(type)
 		console.log(parameters)
-		if(this.exercises[this.pointer].inputs[this.exercises[this.pointer].ind]==undefined){
+		let rinimade = this.exercises[this.pointer].ind
+		console.log(rinimade)
+		console.log(this.pointer)
+		console.log(this.exercises[this.pointer])
+		if(this.exercises[this.pointer].inputs[rinimade]==undefined){
 					Vue.set(this.exercises[this.pointer].inputs, this.exercises[this.pointer].ind, {indexCounter:this.indexCounter, id:this.exercises[this.pointer].ind,value:"", line:line, context:context, ready:false, type:type, parameters:parameters})
 					console.log(this.exercises[this.pointer].inputs[this.ind])
 					this.indexCounter += 1
