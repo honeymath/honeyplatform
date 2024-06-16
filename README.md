@@ -1,10 +1,45 @@
-# Honeymath Platform 
 
-Honeymath is a platform of creating interactive and platform-independent problems.
+
+# Honeymath Platform Overview
+
+Honeymath platform aims to provide an efficient, interactive solution for managing and solving math problems for teachers and students. Here's an overview of the platform's workflow:
+
+First, teachers can open the Honeymath platform and create or select problems(<a href="platform/index.html">Click to enter Problem Maker</a>). Problems can be chosen from existing GitHub resources or modified in detail. Once the problem is created, teachers can save it as a JSON file.
+
+After downloading the JSON file, students can upload it to the platform and start solving the problems (<a href="platform/student.html" download="student.html">A download link for student platform</a>). Students can save their progress at any time, allowing them to pause and resume as needed. The Honeymath platform ensures that the problem data is randomized for each student based on their student ID, providing unique problems while maintaining consistency upon reloading.
+
+Once students complete their assignments, they can submit the JSON file to the teacher. Teachers collect all student JSON files into a folder and use the provided Python script for grading. The script automatically evaluates the assignments, using comments and exception handling to determine scores, and supports partial credit mechanisms.
+
+[Automatic Grading script](evaluator.py)
+
+[Example of submission](130.json)
+
+[Example of grading script](ex.json)
+
+
+Additionally, teachers can generate detailed feedback scripts, allowing students to understand the correctness of each step. Students can load the feedback script on the platform to receive specific error messages and improvement suggestions. Teachers can also provide solution scripts that generate answers for each problem based on the randomized data, ensuring fully automated solutions. This is an example
+
+> [Example of distributing exercises](exercise.py)
+> This exercise only check if student's answer is good to submit, and it does not check for correctness. It motivates student to check by themselves before submission
+
+> [Example of grading feedback script for teacher](feedback.py)
+> Student's create a JSON file and submit. The teacher loads feedback.py in teacher's system. And click grading script option to downloadthe feedback Json script. Then the student load his submitted answer and then load the feedback script to get feedback.
+
+> [Example of solution script](solution.py)
+> Students load this script to get the solution of exercise. 
+
+The above files can be found at the github repository as `semiPositiveDefinite_Exercise.py`, `semiPositiveDefinite_Grading.py` and 
+`semiPositiveDefinite_Solution.py`
+
+
+The comprehensive automation of the Honeymath platform not only enhances teachers' efficiency but also provides students with detailed feedback and a unique learning experience, reducing the likelihood of cheating.
+
+
+
+
+
 
 ## Introduction to Problem Maker
-
-<a href="platform/index.html">Click to enter Problem Maker</a>
 
 A simple example of the problem maker is 
 
@@ -33,6 +68,16 @@ We interact with users by two main functions, `print(message)` for exercise prom
 #### Creating Problems with chatGPT
 
 You don't need to learn how to code. Just state your idea of creating a problem with GPT and let it to create for you. The system is designed in the sense that the logic is understandable by GPT, minimizing the influence of the platform.
+
+
+
+
+
+
+
+
+
+
 
 
 ## Some mathematical tricks of making problems
