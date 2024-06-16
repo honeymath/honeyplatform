@@ -300,6 +300,7 @@ if b!="4":
 <div>
 <div style="display: flex; justify-content: center; background-color:lightgreen; align-items: center; height: 100vh;" v-if = "!teacher && globalSeed==undefined">
 		Student Number:   <input v-if="pythonReady" type="text" v-model="studentNumber"></input> <button v-if="pythonReady" @click="updateGlobalSeed">Enter System</button>
+		<span v-else>Please wait while system is loading...</span>
 </div>
 
 <div v-else>
