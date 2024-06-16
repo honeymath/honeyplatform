@@ -138,3 +138,39 @@ Appending #matrix to the input code, then the system will use matrix input compo
 However, you have option of not appending #matrix, just say `X=int(input())`, without `#matrix`, the system will generate textarea for student to write a number. So you may collect it by `int(input())`. This is idea of answering one number to a question.
 
 A question can have multiple parts. For example, you may first ask about an eigenvalue of a matrix, then ask the student to find an eigenvector *based on* his eigenvalue. For this , you say `eigenvalue = int(input())`, after process with codes, you may then say `X = json.loads(input())#matrix`. This system will process each input as a subquestion, and having two input in your code means you have 2 subquestions. And you may process the code so that each question can uses answers of previous questions.
+
+
+<!--
+Idea of demonstration.
+
+Teacher's creation of exercises.
+
+
+1. Composing a homework.
+
+    - Click Problems to change around each question
+
+    - Preview from student perspective of view.
+
+    - May change a little bit of the logic 
+
+    - May download the progress
+
+    - The random behavior of the platform.
+
+2. Modifying individual exercises
+
+    - Test the code directly
+    
+    - The remarks can control the behavior of the question. Input tools or score counting.
+
+    - Some example of score just counting how many they have be done correctly.
+
+    - Platform independent, it is python and supposed to be able to run on any platform. Can even run in terminal. This make sure even if this platform is outdated and abandoned, the problem bank still exists and can run on any other similar platforms.
+
+    - If you are interested to create your own problem bank, just create a git repository, and upload problem there publicly, and then the honeymath can show your problems all in the system.
+
+    - You can also upload your code by clicking choose File.
+
+3. Save and distribute exercises to students.
+-->

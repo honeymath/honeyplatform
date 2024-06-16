@@ -245,7 +245,7 @@ Vue.component('exercise',{
 		</br>
 		<span v-html = "error" style="color:red;font-size:20px"></span>
 		</br>
-	    	<span v-if="correct" style="color:green;font-size:20px">Your answer is correct!</span>
+	    	<span v-if="correct" style="color:green;font-size:20px">Accepted.</span>
 		<span v-else style="color:orange;font-size:20px"><span v-if="score>0">Partial Credit:{{score}}</span></span>
 		</br>
             	<span style="color:red">{{errors}}</span>
