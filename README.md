@@ -4,6 +4,8 @@
 
 This project is available online at : https://honeymath.com
 
+If you are interested in the code, visit the github page https://github.com/honeymath/honeyplatform
+
 You can also watch the introduction at Youtube Video: https://youtu.be/ziht6w8sr9Y
 
 Honeymath platform aims to provide an efficient, interactive solution for managing and solving math problems for teachers and students. Here's an overview of the platform's workflow:
