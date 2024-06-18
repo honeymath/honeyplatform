@@ -433,18 +433,16 @@ if b!="4":
 		let type = ""
 		let parameters = []
 		if (splita.length > 1){
-			let rinima = splita[splita.length-1].split("(")
-			let caonima = rinima[1]==undefined?"":rinima[1].split(")")[0]
-			parameters = caonima.split(",")
-			type = rinima[0]
+			let parameterWithParentisis = splita[splita.length-1].split("(")
+			let parameterWithCommas = parameterWithParentisis[1]==undefined?"":parameterWithParentisis[1].split(")")[0]
+			parameters = parameterWithCommas.split(",")
+			type = parameterWithParentisis[0]
 		}
 		return {type,parameters} 
 	},
 	getscore(){
 		let lineno = this.exercises[this.pointer].correctUntil
 		let context = this.exercises[this.pointer].code.split('\n')[lineno-1]
-//		console.log("context")
-//		console.log(context)
 		let splita = context.split("#")
 		let ll = splita.length
 		if(ll > 1){
@@ -458,13 +456,10 @@ if b!="4":
 	},
 	prepareInput({line,context}){
 		let {type,parameters} = this.parameters(context)
-		console.log(type)
-		console.log(parameters)
-		let rinimade = this.exercises[this.pointer].ind
-		console.log(rinimade)
+		let inputOrderIndex = this.exercises[this.pointer].ind
 		console.log(this.pointer)
 		console.log(this.exercises[this.pointer])
-		if(this.exercises[this.pointer].inputs[rinimade]==undefined){
+		if(this.exercises[this.pointer].inputs[inputOrderIndex]==undefined){
 					Vue.set(this.exercises[this.pointer].inputs, this.exercises[this.pointer].ind, {indexCounter:this.indexCounter, id:this.exercises[this.pointer].ind,value:"", line:line, context:context, ready:false, type:type, parameters:parameters})
 					console.log(this.exercises[this.pointer].inputs[this.ind])
 					this.indexCounter += 1
@@ -512,7 +507,7 @@ if b!="4":
 	console.log("try loading packs")
     await Promise.all(loadPackagePromises);
 		this.loadingMessage = "Running preloading scripts. These scripts is important to syncronize the random seed and redirect I/O..."
-		let rinimabi = this.pyodide.runPythonAsync(`import inspect
+		let inputRedirection = this.pyodide.runPythonAsync(`import inspect
 import js
 
 system_input = input
@@ -527,8 +522,7 @@ def custom_input(args=''):
 input = custom_input
 `)
 
-	console.log("loading caonimabi")
-	let caonimabi = this.pyodide.runPythonAsync(
+	let randomPackagesInitialization = this.pyodide.runPythonAsync(
 `
 import sympy
 original_randMatrix = sympy.randMatrix
@@ -540,7 +534,7 @@ def cuscus(*args,**kwargs):
 
 sympy.randMatrix = cuscus
 `)
-	await Promise.all([rinimabi,caonimabi])
+	await Promise.all([inputRedirection,randomPackagesInitialization])
 	this.initialize()
 	this.pythonReady = true
 	console.log("load complete")
