@@ -1,21 +1,3 @@
-Vue.component('input-area', {
-    template: `
-        <div>
-            <textarea v-model="inputValue" placeholder="Enter input for Python code here"></textarea>
-        </div>
-    `,
-    props: ['value'],
-    computed: {
-        inputValue: {
-            get() {
-                return this.value;
-            },
-            set(newValue) {
-                this.$emit('input', newValue);
-            }
-        }
-    }
-});
 
 Vue.component('code-mirror', {
     template: `
@@ -44,39 +26,9 @@ Vue.component('code-mirror', {
     }
 });
 
-Vue.component('code-result', {
-    template: `
-        <div>
-            <p>Result:</p>
-            <pre>{{ result }}</pre>
-        </div>
-    `,
-    props: ['result']
-});
-
-Vue.component('code-output', {
-    template: `
-        <div>
-            <p>Output:</p>
-            <pre>{{ output }}</pre>
-        </div>
-    `,
-    props: ['output']
-});
-
-Vue.component('code-error', {
-    template: `
-        <div>
-            <p>Error:</p>
-            <pre>{{ error }}</pre>
-        </div>
-    `,
-    props: ['error']
-});
 
 
 Vue.component('repository',{
-	//props: ['owner','repo'],
 	data(){
 		return{
 			owner: "honeymath",
@@ -319,11 +271,10 @@ if b!="4":
 		</div>
 		<div v-else>
 		    <div style="background-color:black">
-			<button v-if="teacher" @click="restart">Run Code</button>
 			<button v-if="teacher" @click="downloadCode">Download Code</button>
 			<input v-if="teacher" style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{exercises[pointer].code=x})}" id="input-file">
 		    </div>
-		    <code-mirror v-if="exercises[pointer]!=undefined" v-model="exercises[pointer].code" ></code-mirror>
+		    <code-mirror v-if="exercises[pointer]!=undefined" v-model="exercises[pointer].code" @input="runPythonCode" ></code-mirror>
 		</div>
        </div>
 		
@@ -335,7 +286,6 @@ if b!="4":
 	    <input v-if="teacher" type="checkbox" v-model="evaluation"><span v-if="teacher">Evaluation Script</span></input>
 	    <button v-if="teacher" @click="restart">Refresh</button>
 	    <input style="width:200px" type="file" v-on:change="(event)=>{getFile(event,(x)=>{uploadStatus(x)})}" id="input-file">
-	    <!--button v-if="teacher" @click="globalSeed = undefined;restart()">Randomize Question</button-->
 
 		    
 
@@ -370,27 +320,15 @@ if b!="4":
     mounted() {
 
 	document.addEventListener('pythonEvent', (event) => {
-           // const params = event;
-           // console.log(`JavaScript function called with parameters: ${JSON.stringify(params)}`);
-           // alert(`JavaScript function called with parameters: ${JSON.stringify(params)}`);
 		this.prepareInput({
 			line: event.lineno,
 			context: this.exercises[this.pointer].code.split('\n')[event.lineno - 1]
 		})
-		//let line = event.lineno
-		//let context = this.code.split('\n')[line-1]
-		//console.log(event.lineno)
         });
         this.loadPyodide();
-//	this.initialize();// this cause problem when mounting
         },
     methods: {
 	restart(){
-		//this.pyodide.runPython("_random_array = []")
-
-		//this.exercises[this.pointer].seed = Math.random()
-		//this.exercises[this.pointer].inputs.splice(0,)
-		//this.runPythonCode()
 		var pointer_backup = this.pointer
 		this.exercises.forEach((obj,ind)=>{
 			obj.seed = this.globalSeed === undefined?Math.floor(123456789*Math.random()):this.globalSeed
@@ -423,7 +361,6 @@ if b!="4":
 			
 			dict.push({
 				code:obj.code,
-//				inputs:this.evaluation?(obj.inputs.filter(input => input.ready)):obj.inputs,
 				inputs:this.evaluation&&this.teacher?[]:obj.inputs,
 				seed:obj.seed
 				})
@@ -431,12 +368,10 @@ if b!="4":
 		this.download(JSON.stringify(dict),this.teacher?"exercises.json":this.fileName)
 	},
 	uploadStatus(text){
-//		console.log(text)
 		var dict = JSON.parse(text)
 		console.log(dict)
 		
 		var tempExercises = this.exercises.splice(0,)
-//		var sum = 0
 		dict.forEach((obj,ind)=>{
 			this.exercises.push({
 				key:this.indexCounter,
@@ -521,7 +456,6 @@ if b!="4":
 		}
 		
 	},
-//	parameters,type = parameters(context)
 	prepareInput({line,context}){
 		let {type,parameters} = this.parameters(context)
 		console.log(type)
@@ -547,7 +481,6 @@ if b!="4":
             placeFileContent: function(file,callback) {
 	                this.readFileContent(file).then(content => {
 				callback(content)
-  	                	//this.exercises[this.pointer].code = content
 			if(this.autoupload){
 				this.upload()
 			}
@@ -578,8 +511,6 @@ if b!="4":
     this.loadingMessage = "Loading packages...";
 	console.log("try loading packs")
     await Promise.all(loadPackagePromises);
-//        await this.pyodide.loadPackage("sympy");
-//        await this.pyodide.loadPackage("numpy");
 		this.loadingMessage = "Running preloading scripts. These scripts is important to syncronize the random seed and redirect I/O..."
 		let rinimabi = this.pyodide.runPythonAsync(`import inspect
 import js
@@ -610,11 +541,9 @@ def cuscus(*args,**kwargs):
 sympy.randMatrix = cuscus
 `)
 	await Promise.all([rinimabi,caonimabi])
-//	this.reseed()
 	this.initialize()
-// This is preloading fucage. redefine input, later on we will realize redefine random.
 	this.pythonReady = true
-	console.log("load complicated")
+	console.log("load complete")
 	this.runPythonCode()
 		
         },
@@ -643,15 +572,6 @@ sympy.randMatrix = cuscus
         }
     }
 });
-
-
-
-
-
-
-
-
-
 
 
 

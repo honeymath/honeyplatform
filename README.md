@@ -2,6 +2,10 @@
 
 # Honeymath Platform Overview
 
+This project is available online at : https://honeymath.com
+
+You can also watch the introduction at Youtube Video: https://youtu.be/ziht6w8sr9Y
+
 Honeymath platform aims to provide an efficient, interactive solution for managing and solving math problems for teachers and students. Here's an overview of the platform's workflow:
 
 First, teachers can open the Honeymath platform and create or select problems(<a href="platform/index.html">Click to enter Problem Maker</a>). Problems can be chosen from existing GitHub resources or modified in detail. Once the problem is created, teachers can save it as a JSON file.
@@ -108,6 +112,93 @@ givenMatrix = sw*up*lo
 
 Some times, you want a matrix with integer eigenvalue, then you realize the formula P^{-1}ΛP, where P is the integer invertibla matrix with determinant 1 and Λ is the diagonal matrix with integer eigenvalues! Use this idea you can create integer eigenvalue problems!
 
+Here is another example of codes
+
+```python
+#### Problem
+
+from sympy import randMatrix, latex, Matrix,sqrt
+import json
+import re
+
+A = randMatrix(3, max=5, min=1, symmetric=True)
+B = Matrix(A.tolist())
+print(rf"""
+Is the following matrix positive semi-definite?
+$$
+A={latex(A)}
+$$
+If yes, answer 'Yes'. Otherwise, answer 'No'...
+"""
+)
+
+#### Solutions
+
+n = A.rows
+collect = []
+center = []
+rows = []
+
+for i in range(n):
+    if all(element.is_zero for element in A[:,i]):
+        continue
+    elif A[i,i]==0:
+        break
+    cross = A[:,i]*A[i,:]/A[i,i]
+    collect += [cross]
+    rows += [A[i,:]/sqrt(A[i,i])]
+    center += [A[i,i]]
+    A-= cross
+
+exp = "+".join([latex(i) for i in collect])
+if all(element.is_zero for element in A):
+    print("We have a complete diagonal cross filling for matrix")
+    print(rf"$${exp}$$")
+    if all (c>=0 for c in center):
+        print("This means the original matrix is semi-positive definite")
+        U = Matrix.vstack(*rows)
+        print(rf"$$U={latex(U)}$$ and we have $A=U^TU$")
+    else:
+        print("This means the original matrix is NOT semi-positive definite")
+else:
+    print("We can not do a complete diagonal cross filling for the matrix, the matrix is indefinite")
+    print(rf"$${exp}+{latex(A)}$$")
+
+A = B
+
+
+
+#### Exercise
+
+answer = input().strip().upper()
+answer = re.sub(r'[^a-zA-Z0-9]', '', answer)
+
+if answer not in ['YES', 'NO']:
+    raise Exception('Please answer in yes or no')
+
+if answer == 'YES':
+    print(rf"""
+    You mentioned it is a positive semi-definite matrix. Please decompose it into $A=LL^T$ where $L$ is a lower triangular matrix. Please enter your matrix $U$.
+    """)
+    X = json.loads(input())  #matrixlist
+    if (k := len(X)) != 1:
+        raise Exception(rf"You are required to enter 1 matrix, but {k} matrices detected")
+
+    M = Matrix(X[0])
+    print(rf"By what you've entered, you mean $$U = {latex(M)}$$")
+    if not M.is_lower:
+        raise Exception(rf"What you've suggested is not a lower triangular matrix...")
+
+#### Verification
+    P = M * M.T
+    print(rf"By what you've suggested, we have $UU^T = {latex(P)}$")
+
+    if P != A:
+        raise Exception(rf"But $UU^T\neq A$...")#score = 0.1
+
+
+
+```
 
 ## Some technical details
 
@@ -133,11 +224,16 @@ from sympy import Matrix, symbols, Eq, latex
 
 #### For input
 
-Appending #matrix to the input code, then the system will use matrix input component for students so that student don't need to put that by hand Example `X=json.loads(input())#matrix`. The component would return a 3d array. It is the collection of matrices. Each matrix is a 2d-array. The reason we use `json.loads` is that the `input` will only return a string, and we need `json.loads` to convert it to an array.
+Appending #matrix to the input code, then the system will use matrix input component for students so that student don't need to put that by hand Example `X=json.loads(input())#matrixlist`. The component would return a 3d array. It is the collection of matrices. Each matrix is a 2d-array. The reason we use `json.loads` is that the `input` will only return a string, and we need `json.loads` to convert it to an array.
 
 However, you have option of not appending #matrix, just say `X=int(input())`, without `#matrix`, the system will generate textarea for student to write a number. So you may collect it by `int(input())`. This is idea of answering one number to a question.
 
 A question can have multiple parts. For example, you may first ask about an eigenvalue of a matrix, then ask the student to find an eigenvector *based on* his eigenvalue. For this , you say `eigenvalue = int(input())`, after process with codes, you may then say `X = json.loads(input())#matrix`. This system will process each input as a subquestion, and having two input in your code means you have 2 subquestions. And you may process the code so that each question can uses answers of previous questions.
+
+#### Always be responsive.
+
+Note that ALWAYS say what the input you've get from student, because their might be bug of the system that did not correctly obtain the student input. So when student input'yes', always print things like 'you have said yes...', when got student input a matrixlist, always interprete and tell students what they have put there.
+
 
 
 <!--
@@ -172,5 +268,36 @@ Teacher's creation of exercises.
 
     - You can also upload your code by clicking choose File.
 
+    - Create problems by chatGPT
+
 3. Save and distribute exercises to students.
+
+    - Once you finished testing those exercises, just click restart and download it save it to a JSON file. When distributing, just distribute this JSON file to student.
+
+    - Student can login to their platform. Then they select the JSON file to start doing homework... 
+        - The random number is generated based on their student number. 
+
+    - Student can save and load their progress anytime. 
+
+    - The student submit their work just by the saved JSON file. It will saved by their student ID. They submit the JSON file to the teacher.
+
+
+4. Grading of the work.
+
+    - The teacher put every submitted homerowk in a folder, and put his original script, then run a python script to generate a grading.
+        - The original script is necessary to prevent student from changing the script or add malicious script.
+
+    - Then he/she is able to upload the result to whatever platforms.
+
+
+5. Special needs.
+    
+    - To motivate student to think, the teacher might give a script only tell the accepted format of the submission.
+
+    - After submission, the teacher distribute a script to tell student the correctness
+
+    - The teacher may also distribute a solution so student can load.
+
+
+
 -->
