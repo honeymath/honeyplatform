@@ -1,2 +1,3 @@
 # Ignore libs folder
 libs/
+.agents
