@@ -45,8 +45,11 @@ X = json.loads(input())  #matrixlist
 
 | Code | UI Component | Returns |
 |------|-------------|---------|
-| `input()` | Text area | String |
-| `input() #matrixlist` | Matrix editor | JSON string of 3D array `[[[row1], [row2]], ...]` |
+| `input()` | Text area (default) | String |
+| `input() #textarea` | Text area (explicit) | String |
+| `input() #checkbox` | Checkbox selection | String (`"true"` or `"false"`) |
+| `input() #radio` | Radio button selection | String (selected option) |
+| `input() #matrixlist` | Matrix editor (DEPRECATED — see [ADR-0002](../docs/adr/0002-matrixinput-deprecation.md)) | JSON string of 3D array `[[[row1], [row2]], ...]` |
 
 **Important:** `input()` always returns a **string**. You must parse it yourself:
 ```python
@@ -76,6 +79,63 @@ if P != A:
 ```
 
 The score must be a number between 0 and 1. If no `#score` comment is present, the score defaults to 0 for that problem.
+
+## Input Tag Protocol
+
+Input types and parameters are specified via comment tags on the `input()` line using `#<name>` or `#<name>=<value>` syntax.
+
+### Syntax Rules
+
+1. Tags appear as Python comments on the `input()` line
+2. Simple tags: `#tagname` — selects an input type
+3. Key-value tags: `#key=value` — sets a parameter
+4. **Locality rule**: Tags only apply to the `input()` call on the same line. They do not carry over to subsequent `input()` calls.
+
+### Supported Tags
+
+| Tag | Description |
+|-----|-------------|
+| `#textarea` | Multi-line text input (this is the default if no tag is specified) |
+| `#checkbox` | Checkbox selection |
+| `#radio` | Radio button selection |
+| `#matrixlist` | Matrix editor (DEPRECATED — see [ADR-0002](../docs/adr/0002-matrixinput-deprecation.md)) |
+| `#rows=N` | Number of rows for textarea |
+| `#score=X` | Partial credit (used on `raise Exception` lines) |
+
+### Examples
+
+```python
+# Default text input (no tag needed)
+answer = input()
+
+# Explicit textarea
+answer = input()  #textarea
+
+# Checkbox
+yn = input()  #checkbox
+
+# Radio selection
+choice = input()  #radio
+```
+
+### Standalone Compatibility
+
+When running as `python3 problem.py`, tags are just comments and are ignored by Python. `input()` falls through to standard stdin.
+
+### Migration from `#matrixlist`
+
+`#matrixlist` is deprecated. For new problems, use `#textarea` and instruct students on the expected format:
+
+```python
+# Old (deprecated):
+X = json.loads(input())  #matrixlist
+
+# New:
+print("Enter matrix rows, one per line (e.g., '1 2 3'):")
+answer = input()  #textarea
+```
+
+See [ADR-0002](../docs/adr/0002-matrixinput-deprecation.md) and [ADR-0003](../docs/adr/0003-input-tag-protocol.md) for design rationale.
 
 ## Multi-Part Questions
 
@@ -127,6 +187,47 @@ det = int(input())
 if det != A.det():
     raise Exception(rf"Incorrect. $\det(A) \neq {det}$")
 ```
+
+### Per-Package Seed Behavior
+
+The platform seeds three random sources before each problem execution:
+
+| Package | Seed Method | Isolation | Order-Dependent? |
+|---------|-------------|-----------|------------------|
+| `random` | `random.seed(student_id)` | Global state | Yes — each call to `random.randint()` etc. advances the global state |
+| `numpy.random` | `numpy.random.seed(student_id)` | Global state | Yes — each call to `numpy.random.*` advances the global state |
+| `sympy.randMatrix` | Patched to use `random.Random(student_id)` | **Isolated instance** | No — uses its own private PRNG, does not affect `random` or `numpy` state |
+
+### Important Rules
+
+1. **`random` and `numpy.random` are order-dependent**: The sequence of random calls determines the output. Adding a `random.randint()` call before existing ones will change all subsequent values.
+
+2. **`sympy.randMatrix` is isolated**: It uses a separate `random.Random(student_id)` instance, so calling it does not affect the state of `random` or `numpy.random`.
+
+3. **Don't mix `random` and `numpy.random`**: They have separate global states. If you mix them, the reproducibility becomes harder to reason about. Pick one source per problem.
+
+4. **If you need order-independent randomness**, create your own `random.Random(seed)` instance:
+   ```python
+   rng = random.Random(42)  # private instance, won't affect global state
+   n = rng.randint(2, 5)
+   ```
+
+### Local Testing
+
+To test that your problem generates consistent output for a given seed:
+
+```bash
+python3 -c "
+import random, numpy
+random.seed(12345)
+numpy.random.seed(12345)
+exec(open('your_problem.py').read())
+"
+```
+
+Run this twice — the output should be identical.
+
+See [ADR-0004](../docs/adr/0004-random-seed-stabilization.md) for the full design rationale.
 
 ## Best Practices
 

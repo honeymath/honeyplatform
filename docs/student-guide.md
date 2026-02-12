@@ -50,14 +50,14 @@ When you are done:
 1. Click "Save/Download" to download your final submission
 2. Submit the `{your_student_ID}.json` file through your course's submission system (LMS, email, etc.)
 
-## Matrix Input
+## Input Types
 
-For matrix problems:
-1. Click **"Add Matrix"** to create a new matrix
-2. **Select dimensions**: Move your mouse to choose rows and columns, then click
-3. **Fill entries**: Click on each cell and type the value
-4. **Delete**: Click "Delete me" to remove a matrix
-5. Some problems ask for multiple matrices - add as many as needed
+Depending on the problem, you may see different input types:
+
+- **Text/Number**: A text area where you type your answer (most common)
+- **Checkbox**: A yes/no or true/false selection
+- **Radio buttons**: Choose one option from a list
+- **Matrix** (legacy): A visual grid editor for entering matrices. Click "Add Matrix" to create one, select dimensions, then fill in the entries. Some problems ask for multiple matrices.
 
 ## Tips
 

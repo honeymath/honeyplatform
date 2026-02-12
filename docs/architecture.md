@@ -118,7 +118,7 @@ honeyplatform/
 ├── src/
 │   ├── shared/                     # Code shared between teacher & student
 │   │   ├── components/
-│   │   │   ├── MatrixInput.vue     #   Visual matrix editor
+│   │   │   ├── MatrixInput.vue     #   Visual matrix editor (DEPRECATED — see ADR-0002)
 │   │   │   └── MathRenderer.vue    #   MathJax rendering wrapper
 │   │   ├── pyodide/
 │   │   │   └── runner.ts           #   Pyodide lifecycle & execution engine
@@ -229,7 +229,7 @@ honeyplatform/
 ```
 
 - `inputs[].value`: The student's answer as a string
-- `inputs[].type`: Input type derived from code comment (`""` = text, `"matrixlist"` = matrix)
+- `inputs[].type`: Input type derived from code comment (`""` or `"textarea"` = text, `"checkbox"`, `"radio"`, `"matrixlist"` = matrix (deprecated))
 - `seed`: The student's ID (used as seed)
 
 ### output.csv (Grader → LMS)
@@ -252,8 +252,11 @@ The platform treats Python scripts as interactive problem definitions using thre
 | Python Construct | Platform Behavior |
 |-----------------|-------------------|
 | `print(message)` | Display text to student. Supports LaTeX via `$$...$$` and `$...$`. |
-| `input()` | Pause and wait for student text/number answer. |
-| `input() #matrixlist` | Pause and show matrix input UI. Returns JSON string of 3D array. |
+| `input()` | Pause and wait for student text/number answer (default: `#textarea`). |
+| `input() #textarea` | Explicitly show multi-line text area. |
+| `input() #checkbox` | Show checkbox input. |
+| `input() #radio` | Show radio button selection. |
+| `input() #matrixlist` | Show matrix input UI (DEPRECATED — see [ADR-0002](adr/0002-matrixinput-deprecation.md)). Returns JSON string of 3D array. |
 | `raise Exception(msg)` | Show error message. Student's answer is wrong. |
 | `raise Exception(msg) #score = 0.5` | Wrong answer with partial credit (0.0–1.0). |
 | Program completes without exception | All answers correct. Score = 1.0. |
@@ -265,7 +268,15 @@ The platform treats Python scripts as interactive problem definitions using thre
 3. **I/O Redirection**:
    - `input()` is monkey-patched to dispatch a DOM event, which triggers the Vue UI to show an input field
    - `print()` is redirected to a stdout handler that appends output to the Vue reactive data
-4. **Seeding**: Before each problem execution, `random.seed(studentID)` and `numpy.random.seed(studentID)` are called. `sympy.randMatrix` is also patched to use the seeded PRNG.
+4. **Seeding**: Before each problem execution, three random sources are seeded:
+
+   | Package | Method | Isolation |
+   |---------|--------|-----------|
+   | `random` | `random.seed(studentID)` | Global state, order-dependent |
+   | `numpy.random` | `numpy.random.seed(studentID)` | Global state, order-dependent |
+   | `sympy.randMatrix` | Patched with `random.Random(studentID)` | **Isolated** `random.Random` instance |
+
+   The browser (`platform/app.js:424-430`, `528-535`) and evaluator (`evaluator.py:38-45`) implement identical seeding logic. See [ADR-0004](adr/0004-random-seed-stabilization.md) for details.
 
 ### Security Considerations
 

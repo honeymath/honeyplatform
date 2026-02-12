@@ -33,21 +33,18 @@ npm run typecheck  # TypeScript checking
 ## Project Structure
 
 ```
-src/shared/         → Shared components, Pyodide runner, types, utilities
-src/teacher/        → Teacher app (code editor, problem management, GitHub browser)
-src/student/        → Student app (login, problem view, answer input, progress)
-grader/             → Python grading tool (evaluator.py)
-examples/           → Example problem Python scripts
-docs/               → Architecture, guides, specs
-dist/               → Build output (teacher.html, student.html)
+platform/               → Legacy codebase (Vue 2, to be migrated)
+docs/                   → Architecture, guides, specs
+docs/adr/               → Architecture Decision Records
+.agents/                → Agent system (symlink to private repo)
+evaluator.py            → Grading script
 ```
 
 ## Critical Files
 
-- `src/shared/pyodide/runner.ts` - Pyodide lifecycle, I/O redirection, seed management
-- `src/shared/types/exercise.ts` - Core data interfaces (Exercise, Input, ExerciseState)
-- `src/shared/components/MatrixInput.vue` - Visual matrix editor component
-- `grader/evaluator.py` - Automated grading script
+- `platform/app.js` - Main application logic (Vue 2, Pyodide lifecycle, I/O redirection, seed management)
+- `platform/matrixinput.js` - Visual matrix editor component (DEPRECATED — see ADR-0002)
+- `evaluator.py` - Automated grading script
 
 ## Python Problem Protocol
 
@@ -56,11 +53,25 @@ Problems are standalone Python scripts. The platform just runs them:
 | Construct | Behavior |
 |-----------|----------|
 | `print(msg)` | Show text/LaTeX to student |
-| `input()` | Text input |
-| `input() #matrixlist` | Matrix input UI |
+| `input()` | Text input (default: `#textarea`) |
+| `input() #matrixlist` | Matrix input UI (DEPRECATED — see ADR-0002) |
+| `input() #checkbox` | Checkbox input |
+| `input() #radio` | Radio button input |
 | `raise Exception(msg)` | Wrong answer (score=0) |
 | `raise Exception(msg) #score = 0.5` | Partial credit |
 | Program completes | All correct (score=1) |
+
+### Tag Protocol
+
+Input type and parameters are specified via comment tags on the `input()` line using `#<name>` or `#<name>=<value>` syntax:
+
+```python
+answer = input()                    # defaults to #textarea
+answer = input() #checkbox          # tag without value
+answer = input() #rows=5            # tag with value
+```
+
+**Locality rule**: Tags only apply to the `input()` call on the same line. They do not carry over to subsequent `input()` calls.
 
 ## Data Flow
 
@@ -84,3 +95,19 @@ Teacher Python scripts → exercises.json → Student solves → {studentID}.jso
 - `docs/teacher-guide.md` - Teacher workflow
 - `docs/student-guide.md` - Student usage
 - `docs/development.md` - Developer setup & build
+- `docs/adr/` - Architecture Decision Records
+
+## Decision Logging
+
+All architectural and design decisions are recorded as Architecture Decision Records (ADRs):
+- Location: `docs/adr/NNNN-short-title.md`
+- Format: Status, Date, Context, Decision, Consequences
+- Reference existing ADRs before making conflicting decisions
+
+## Agent System
+
+The `.agents/` directory is a symlink to the private `honeyplatform-agents` repository. It contains:
+
+- **Role definitions**: `.agents/roles/<role>/job_description.md` — one per agent role (architect, engineer, reviewer, manager)
+- **Email system**: `.agents/utils/email.sh` — inter-agent communication tool. Manual at `.agents/utils/docs/email_system_manual.md`
+- **System changelog**: `.agents/_system/changelog.md` — log of structural changes to the agent system

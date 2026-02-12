@@ -146,3 +146,4 @@ A script that prints the full solution for each problem. Students load it to see
 3. **Non-integer answers**: Design problems so answers are integers or simple fractions
 4. **Missing LaTeX delimiters**: Use `$$...$$` for display math, `$...$` for inline
 5. **Backslash in f-strings**: Use `rf"..."` (raw f-string) for LaTeX commands
+6. **`#matrixlist` is deprecated**: Use `#textarea` (or plain `input()`) for new problems. The matrix editor UI is being phased out in favor of text-based input. See [ADR-0002](adr/0002-matrixinput-deprecation.md).
