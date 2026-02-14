@@ -92,3 +92,6 @@ Implement a tree-structured answer storage system:
 - Teacher workflow is unaffected
 - Problem authoring is unaffected
 - This is a student UX improvement only
+
+### User comments:
+This tree has a problem as what should we use as a primary key? We can not use what user's input because then sometimes [01,0] would be different than [1,0]  Instead, we should convert it by equivalent classes as the key. This needs some extra design in the problem however.
