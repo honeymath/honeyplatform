@@ -65,3 +65,7 @@ When running as `python3 problem.py`, tags are just comments and are ignored. `i
 ### Neutral
 
 - The `#score=X` tag on `raise Exception` lines already uses this pattern, so the new syntax is consistent with existing behavior
+
+### User notes:
+
+Some potential issues may arise since in the nested program it is very hard to trace just by line number of script, the hidden state machine is a problem and hard to trace all scores. any method or idea?
